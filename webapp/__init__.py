@@ -8,10 +8,8 @@ from . import resources
 
 db = SQLAlchemy()
 
+app = Flask(__name__)
+db.init_app(app)
 
-def create_app():
-    app = Flask(__name__)
-    db.init_app(app)
-    api = Api(app)
-    api.add_resource(resources.Index, '/')
-    return app
+api = Api(app)
+api.add_resource(resources.Index, '/')
