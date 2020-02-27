@@ -21,6 +21,6 @@ class ImageModel(db.Model):
     __tablename__ = 'images'
     key = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(120), nullable=False)
-    user_id = db.Column(db.Integer, ForeignKey('users.id'), nullable=False,)
+    user_id = db.Column(db.Integer, ForeignKey('users.id'), nullable=False)
 
 
