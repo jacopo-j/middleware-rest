@@ -3,7 +3,8 @@
 
 from flask import Flask
 from flask_restplus import Api
-from flask_sqlalchemy import SQLAlchemy
+from flask_sqlalchemy import SQLAlchemy, event
+from sqlalchemy.engine import Engine
 from json import load
 
 with open("webapp/schemas.json", "r") as fp:
@@ -28,6 +29,14 @@ db.init_app(app)
 def create_table():
     db.drop_all()
     db.create_all()
+
+
+# Enable foreign key constraints checking
+@event.listens_for(Engine, "connect")
+def _set_sqlite_pragma(dbapi_connection, connection_record):
+    cursor = dbapi_connection.cursor()
+    cursor.execute("PRAGMA foreign_keys=ON;")
+    cursor.close()
 
 
 
