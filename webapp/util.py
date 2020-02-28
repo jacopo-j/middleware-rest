@@ -14,7 +14,7 @@ class UserBuilder(dict):
         dict.__init__(self)
         self["id"] = id
         self["username"] = username
-        add_self(self, "TBD")
+        add_self(self, schemas["user"].format(id=id))
 
 
 

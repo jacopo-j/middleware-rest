@@ -3,6 +3,7 @@ from sqlalchemy.orm import relationship
 from passlib.hash import pbkdf2_sha256 as sha256
 from . import db
 
+
 class User(db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
@@ -21,6 +22,7 @@ class User(db.Model):
     @classmethod
     def exists_by_username(cls, searched_username):
         return cls.query.filter_by(username=searched_username).count() != 0
+
 
 class Image(db.Model):
     __tablename__ = 'images'
