@@ -2,8 +2,8 @@ from flask_restful import Resource, reqparse, Api
 from flask import make_response, jsonify
 from sqlalchemy import func
 from .models import User, Image
-from webapp import db
-from .util import UserBuilder
+from webapp import db, schemas
+from .util import UserBuilder, add_self
 
 
 class Index(Resource):
@@ -40,7 +40,11 @@ class UsersQuery(Resource):
     # TODO add AUTH required
     def get(self):
         users = [UserBuilder(id, username) for id,username in db.session.query(User.id, User.username)]
-        return jsonify(users)
+        response = dict()
+        response["users"] = users
+        add_self(response, schemas["users"])
+        return response
+
 
 
 
