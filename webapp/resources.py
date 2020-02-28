@@ -23,10 +23,7 @@ class Register(Resource):
         data = parser.parse_args()
         if User.exists_by_username(data['username']):
             return {'message': 'User with username equal to {} already exists'.format(data['username'])}
-        new_id = 0
-        if db.session.query(User).first():
-            new_id = db.session.query(func.max(User.id)).scalar() + 1
-        new_user = User(username=data['username'], id=new_id,
+        new_user = User(username=data['username'],
                         password=User.generate_hash(data['password']))
         try:
             db.session.add(new_user)
