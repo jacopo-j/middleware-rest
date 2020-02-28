@@ -1,0 +1,6 @@
+{
+  "register": "/register",
+  "users": "/users",
+  "upload": "/upload",
+  "images": "/get<string:name>"
+}

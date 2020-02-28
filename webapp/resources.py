@@ -1,9 +1,9 @@
 from flask_restful import Resource, reqparse, Api
-from flask import make_response
+from flask import make_response, jsonify
 from sqlalchemy import func
-
 from .models import User, Image
 from webapp import db
+from .util import UserBuilder
 
 
 class Index(Resource):
@@ -23,18 +23,28 @@ class Register(Resource):
             return {'message': 'User with username equal to {} already exists'.format(data['username'])}
         new_id = 0
         if db.session.query(User).first():
-            new_id = db.session.query(func.max(User.id))
+            new_id = db.session.query(func.max(User.id)).scalar() + 1
         new_user = User(username=data['username'], id=new_id,
                         password=User.generate_hash(data['password']))
         try:
             db.session.add(new_user)
             db.session.commit()
-            # TODO JWT
-            return {
-                'message': 'User {} was created'.format(data['username'])
-            }
+            response = jsonify(success=True)
+            return response
         except Exception as e:
             print(e)
             return {'message': 'Internal error'}
+
+
+class UsersQuery(Resource):
+    # TODO add AUTH required
+    def get(self):
+        users = [UserBuilder(id, username) for id,username in db.session.query(User.id, User.username)]
+        return jsonify(users)
+
+
+
+
+
 
 
