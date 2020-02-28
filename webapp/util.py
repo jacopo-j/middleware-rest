@@ -1,17 +1,20 @@
 from webapp import db, schemas
 
 
+def add_self(object: dict, link):
+    self_link = dict()
+    self_link["href"] = link
+    if "_links" not in object:
+        object["_links"] = dict()
+    object["_links"]["self"] = self_link
+
+
 class UserBuilder(dict):
     def __init__(self, id, username):
         dict.__init__(self)
         self["id"] = id
         self["username"] = username
-        self["_links"] = {}
-        self.add_self()
+        add_self(self, "TBD")
 
-    def add_self(self):
-        self_link = dict()
-        self_link["href"] = schemas["users"]
-        self["_links"]["self"] = self_link
 
 
