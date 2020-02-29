@@ -1,13 +1,14 @@
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
 from passlib.hash import pbkdf2_sha256 as sha256
+from .util import generate_guid
 from . import db
 
 
 class User(db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(120), nullable=False, unique=True)
+    username = db.Column(db.String(120), nullable=False, unique=True, index=True)
     password = db.Column(db.String(120), nullable=False)
     images = relationship("Image")
 
@@ -26,7 +27,8 @@ class User(db.Model):
 
 class Image(db.Model):
     __tablename__ = 'images'
-    key = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
+    guid = db.Column(db.String(32), nullable=False, unique=True, index=True, default=generate_guid)
     title = db.Column(db.String(120), nullable=False)
     user_id = db.Column(db.Integer, ForeignKey('users.id'), nullable=False)
 
