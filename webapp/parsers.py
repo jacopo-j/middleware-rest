@@ -9,6 +9,18 @@ class Parsers:
                               required=True,
                               help='Image file')
 
+    create_client = reqparse.RequestParser()
+    create_client.add_argument('client_name', required=True)
+    create_client.add_argument('client_uri', required=True)
+    create_client.add_argument('grant_type', required=True)
+    create_client.add_argument('redirect_uri', required=True)
+    create_client.add_argument('response_type', required=True)
+    create_client.add_argument('scope', required=True)
+    create_client.add_argument('token_endpoint_auth_method', required=True)
+
     register = reqparse.RequestParser()
-    register.add_argument('username', help='This field cannot be blank', required=True)
-    register.add_argument('password', help='This field cannot be blank', required=True)
+    register.add_argument('username', required=True)
+    register.add_argument('password', required=True)
+
+    authorize = reqparse.RequestParser()
+    authorize.add_argument('user_id', required=True)

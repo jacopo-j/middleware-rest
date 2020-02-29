@@ -1,10 +1,24 @@
 from flask_restplus import Resource, reqparse, Api
-from flask import make_response, jsonify
+from flask import make_response, jsonify, request, session, redirect
 from sqlalchemy import func
-from .models import User, Image
-from webapp import db, schemas, api
+from .models import db, User, Image, OAuth2Client
+from webapp import schemas, api
 from .util import UserBuilder, add_self
 from .parsers import Parsers
+from .oauth2 import authorization, require_oauth
+from werkzeug.security import gen_salt
+import time
+
+
+def current_user():
+    if 'id' in session:
+        uid = session['id']
+        return User.query.get(uid)
+    return None
+
+
+def split_by_crlf(s):
+    return [v for v in s.splitlines() if v]
 
 
 @api.route('/index')
@@ -18,9 +32,6 @@ class Index(Resource):
 @api.route(schemas["register"])
 class Register(Resource):
     def post(self):
-        parser = reqparse.RequestParser()
-        parser.add_argument('username', help='This field cannot be blank', required=True)
-        parser.add_argument('password', help='This field cannot be blank', required=True)
         data = Parsers.register.parse_args()
         if User.exists_by_username(data['username']):
             return {'message': 'User with username equal to {} already exists'.format(data['username'])}
@@ -36,9 +47,9 @@ class Register(Resource):
             return {'message': 'Internal error'}
 
 
+@require_oauth('list_users')
 @api.route(schemas["users"])
 class UsersQuery(Resource):
-    # TODO add AUTH required
     def get(self):
         users = [UserBuilder(id, username) for id,username in db.session.query(User.id, User.username)]
         response = dict()
@@ -47,7 +58,60 @@ class UsersQuery(Resource):
         return response
 
 
+@api.route('/create_client')
+class CreateClient(Resource):
+    def post(self):
+        user = current_user()
+        if not user:
+            return redirect('/')
 
+        client_id = gen_salt(24)
+        client_id_issued_at = int(time.time())
+        client = OAuth2Client(
+            client_id=client_id,
+            client_id_issued_at=client_id_issued_at,
+            user_id=user.id,
+        )
+
+        if client.token_endpoint_auth_method == 'none':
+            client.client_secret = ''
+        else:
+            client.client_secret = gen_salt(48)
+
+        data = Parsers.create_client.parse_args()
+        client_metadata = {
+            "client_name": data["client_name"],
+            "client_uri": data["client_uri"],
+            "grant_types": split_by_crlf(data["grant_type"]),
+            "redirect_uris": split_by_crlf(data["redirect_uri"]),
+            "response_types": split_by_crlf(data["response_type"]),
+            "scope": data["scope"],
+            "token_endpoint_auth_method": data["token_endpoint_auth_method"]
+        }
+        client.set_client_metadata(client_metadata)
+        db.session.add(client)
+        db.session.commit()
+        return redirect('/')
+
+
+@api.route('/oauth/authorize')
+class Authorize(Resource):
+    def post(self):
+        data = Parsers.authorize.parse_args()
+        user = User.query.filter_by(id=data['user_id']).first()
+        return authorization.create_authorization_response(grant_user=user)
+
+
+@api.route('/oauth/token')
+class IssueToken(Resource):
+    def post(self):
+        return authorization.create_token_response()
+
+
+@api.route('/oauth/revoke')
+class RevokeToken(Resource):
+    def post(self):
+        return authorization.create_endpoint_response('revocation')
 
 
 
