@@ -9,3 +9,4 @@ MarkupSafe==1.1.1
 Flask-SQLAlchemy==2.4.1
 Flask-RESTPlus==0.13.0
 Werkzeug==0.16.1
+boto3==1.12.11

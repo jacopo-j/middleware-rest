@@ -4,6 +4,7 @@ from sqlalchemy import func
 from .models import User, Image
 from webapp import db, schemas, api
 from .util import UserBuilder, add_self
+from .parsers import Parsers
 
 
 @api.route('/index')
@@ -20,7 +21,7 @@ class Register(Resource):
         parser = reqparse.RequestParser()
         parser.add_argument('username', help='This field cannot be blank', required=True)
         parser.add_argument('password', help='This field cannot be blank', required=True)
-        data = parser.parse_args()
+        data = Parsers.register.parse_args()
         if User.exists_by_username(data['username']):
             return {'message': 'User with username equal to {} already exists'.format(data['username'])}
         new_id = 0
@@ -47,7 +48,6 @@ class UsersQuery(Resource):
         response["users"] = users
         add_self(response, schemas["users"])
         return response
-
 
 
 
