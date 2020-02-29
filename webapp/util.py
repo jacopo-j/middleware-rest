@@ -1,4 +1,5 @@
 from webapp import db, schemas
+import uuid
 
 
 def add_self(object: dict, link):
@@ -17,4 +18,5 @@ class UserBuilder(dict):
         add_self(self, schemas["user"].format(id=id))
 
 
-
+def generate_guid():
+    return uuid.uuid4().hex
