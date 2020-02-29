@@ -12,6 +12,8 @@ from .models import db
 with open("webapp/schemas.json", "r") as fp:
     schemas = load(fp)
 
+with open("webapp/config.json", "r") as fp:
+    config = load(fp)
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = '3205fc85cd004116bfe218f14192e49a'
