@@ -11,3 +11,4 @@ Flask-RESTPlus==0.13.0
 Werkzeug==0.16.1
 boto3==1.12.11
 authlib
+python-magic

@@ -7,7 +7,10 @@ class Parsers:
     image_upload.add_argument('image',
                               type=datastructures.FileStorage,
                               required=True,
+                              location='files',
                               help='Image file')
+    image_upload.add_argument('title',
+                              required=True)
 
     create_client = reqparse.RequestParser()
     create_client.add_argument('client_name', required=True)

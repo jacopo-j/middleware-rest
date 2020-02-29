@@ -2,12 +2,14 @@ from flask_restplus import Resource, reqparse, Api
 from flask import make_response, jsonify, request, session, redirect
 from sqlalchemy import func
 from .models import db, User, Image, OAuth2Client
-from webapp import schemas, api
-from .util import UserBuilder, add_self
+from webapp import schemas, config, api
+from .util import UserBuilder, ImageBuilder, add_self, check_size_type, get_mimetype
 from .parsers import Parsers
 from .oauth2 import authorization, require_oauth
 from werkzeug.security import gen_salt
 import time
+import uuid
+import boto3
 
 
 def current_user():
@@ -31,6 +33,7 @@ class Index(Resource):
 
 @api.route(schemas["register"])
 class Register(Resource):
+    @api.expect(Parsers.register, validate=True)
     def post(self):
         data = Parsers.register.parse_args()
         if User.exists_by_username(data['username']):
@@ -40,8 +43,7 @@ class Register(Resource):
         try:
             db.session.add(new_user)
             db.session.commit()
-            response = jsonify(success=True)
-            return response
+            return jsonify(success=True)
         except Exception as e:
             print(e)
             return {'message': 'Internal error'}
@@ -56,6 +58,39 @@ class UsersQuery(Resource):
         response["users"] = users
         add_self(response, schemas["users"])
         return response
+
+
+class ImagesQuery(Resource):
+    # TODO add AUTH required
+    def get(self, user_id):
+        if not User.exists_by_id(user_id):
+            return jsonify(message="User with given name doesn't exist")
+        images = [ImageBuilder(user_id, id, guid, title) for id, guid, title in db.session.query(Image.id, Image.guid, Image.title)]
+        response = dict()
+        response["id"] = user_id
+        response["images"] = images
+        add_self(response, schemas["user"].format(id=user_id))
+        return response
+
+
+@api.route(schemas['upload'])
+class ImageUpload(Resource):
+    @api.expect(Parsers.image_upload)
+    def post(self):
+        # TODO change to the related authenticated user
+        user_id = 1
+        bucket = boto3.resource('s3').Bucket(config['bucket_name'])
+        data = Parsers.image_upload.parse_args()
+        new_guid = uuid.uuid4().hex
+        new_image = Image(title=data['title'], user_id=user_id, guid=new_guid)
+        new_file = data['image'].read()
+        new_type = get_mimetype(new_file)
+        if not check_size_type(new_type, new_file):
+            return jsonify(success=False)
+        bucket.put_object(Body=new_file, Key=new_guid, ContentType=new_type, ACL='public-read')
+        db.session.add(new_image)
+        db.session.commit()
+        return jsonify(success=True)
 
 
 @api.route('/create_client')
@@ -92,6 +127,7 @@ class CreateClient(Resource):
         db.session.add(client)
         db.session.commit()
         return redirect('/')
+@api.route(schemas["user"].format(id="<user_id>"))
 
 
 @api.route('/oauth/authorize')
