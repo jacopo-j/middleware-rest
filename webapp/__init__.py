@@ -10,6 +10,8 @@ from json import load
 with open("webapp/schemas.json", "r") as fp:
     schemas = load(fp)
 
+with open("webapp/config.json", "r") as fp:
+    config = load(fp)
 
 db = SQLAlchemy()
 app = Flask(__name__)
