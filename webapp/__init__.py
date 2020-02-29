@@ -3,17 +3,20 @@
 
 from flask import Flask
 from flask_restplus import Api
-from flask_sqlalchemy import SQLAlchemy, event
+from flask_sqlalchemy import event
 from sqlalchemy.engine import Engine
 from json import load
+from .oauth2 import config_oauth
+from .models import db
 
 with open("webapp/schemas.json", "r") as fp:
     schemas = load(fp)
 
 
-db = SQLAlchemy()
 app = Flask(__name__)
+app.config['SECRET_KEY'] = '3205fc85cd004116bfe218f14192e49a'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 api = Api(app)
 
 # Import resources in the app context
@@ -23,6 +26,7 @@ with app.app_context():
 
 
 db.init_app(app)
+config_oauth(app)
 
 
 @app.before_first_request
