@@ -2,9 +2,10 @@ from flask_restplus import Resource, reqparse, Api
 from flask import make_response, jsonify
 from sqlalchemy import func
 from .models import User, Image
-from webapp import db, schemas, api
-from .util import UserBuilder, add_self
+from webapp import db, schemas, config, api
+from .util import UserBuilder, add_self, generate_guid, check_size_type, get_mimetype
 from .parsers import Parsers
+import boto3
 
 
 @api.route('/index')
@@ -17,10 +18,8 @@ class Index(Resource):
 
 @api.route(schemas["register"])
 class Register(Resource):
+    @api.expect(Parsers.register, validate=True)
     def post(self):
-        parser = reqparse.RequestParser()
-        parser.add_argument('username', help='This field cannot be blank', required=True)
-        parser.add_argument('password', help='This field cannot be blank', required=True)
         data = Parsers.register.parse_args()
         if User.exists_by_username(data['username']):
             return {'message': 'User with username equal to {} already exists'.format(data['username'])}
@@ -29,8 +28,7 @@ class Register(Resource):
         try:
             db.session.add(new_user)
             db.session.commit()
-            response = jsonify(success=True)
-            return response
+            return jsonify(success=True)
         except Exception as e:
             print(e)
             return {'message': 'Internal error'}
@@ -45,6 +43,30 @@ class UsersQuery(Resource):
         response["users"] = users
         add_self(response, schemas["users"])
         return response
+
+
+@api.route(schemas['upload'])
+class ImageUpload(Resource):
+    @api.expect(Parsers.image_upload)
+    def post(self):
+        # TODO change to the related authenticated user
+        user_id = 1
+        bucket = boto3.resource('s3').Bucket(config['bucket_name'])
+        data = Parsers.image_upload.parse_args()
+        new_guid = generate_guid()
+        new_image = Image(title=data['title'], user_id=user_id, guid=new_guid)
+        new_file = data['image'].read()
+        new_type = get_mimetype(data)
+        if not check_size_type(new_type, new_file):
+            return jsonify(success=False)
+        bucket.put_object(Body=new_file, Key=new_guid, ContentType=new_type, ACL='public-read')
+        return jsonify(success=True)
+
+
+
+
+
+
 
 
 
