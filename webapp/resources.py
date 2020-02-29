@@ -65,7 +65,8 @@ class ImagesQuery(Resource):
     def get(self, user_id):
         if not User.exists_by_id(user_id):
             return jsonify(message="User with given name doesn't exist")
-        images = [ImageBuilder(user_id, id, guid, title) for id, guid, title in db.session.query(Image.id, Image.guid, Image.title)]
+        selected_images = Image.query.filter_by(user_id=user_id).all()
+        images = [ImageBuilder(user_id, image.id, image.guid, image.title) for image in selected_images]
         response = dict()
         response["id"] = user_id
         response["images"] = images
