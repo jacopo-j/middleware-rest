@@ -3,7 +3,8 @@ from flask import make_response, jsonify
 from sqlalchemy import func
 from .models import User, Image
 from webapp import db, schemas, config, api
-from .util import UserBuilder, add_self, generate_guid, check_size_type, get_mimetype
+from .util import UserBuilder, ImageBuilder
+from .util import add_self, generate_guid, check_size_type, get_mimetype
 from .parsers import Parsers
 import boto3
 
@@ -45,6 +46,20 @@ class UsersQuery(Resource):
         return response
 
 
+@api.route(schemas["user"].format(id="<user_id>"))
+class ImagesQuery(Resource):
+    # TODO add AUTH required
+    def get(self, user_id):
+        if not User.exists_by_id(user_id):
+            return jsonify(message="User with given name doesn't exist")
+        images = [ImageBuilder(user_id, id, guid, title) for id, guid, title in db.session.query(Image.id, Image.guid, Image.title)]
+        response = dict()
+        response["id"] = user_id
+        response["images"] = images
+        add_self(response, schemas["user"].format(id=user_id))
+        return response
+
+
 @api.route(schemas['upload'])
 class ImageUpload(Resource):
     @api.expect(Parsers.image_upload)
@@ -56,10 +71,12 @@ class ImageUpload(Resource):
         new_guid = generate_guid()
         new_image = Image(title=data['title'], user_id=user_id, guid=new_guid)
         new_file = data['image'].read()
-        new_type = get_mimetype(data)
+        new_type = get_mimetype(new_file)
         if not check_size_type(new_type, new_file):
             return jsonify(success=False)
         bucket.put_object(Body=new_file, Key=new_guid, ContentType=new_type, ACL='public-read')
+        db.session.add(new_image)
+        db.session.commit()
         return jsonify(success=True)
 
 
