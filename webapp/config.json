@@ -1,5 +1,7 @@
 {
   "bucket_name": "middleware-rest-2020",
   "storage": "https://{bucket_name}.s3.amazonaws.com/{guid}",
-  "max_size_kb": 1000
+  "max_size_kb": 1000,
+  "host": "0.0.0.0",
+  "default_port": "5000"
 }
