@@ -12,6 +12,10 @@ class Parsers:
     image_upload.add_argument('title',
                               required=True)
 
+    login = reqparse.RequestParser()
+    login.add_argument('username', required=True)
+    login.add_argument('password', required=True)
+
     create_client = reqparse.RequestParser()
     create_client.add_argument('client_name', required=True)
     create_client.add_argument('client_uri', required=True)

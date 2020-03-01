@@ -97,12 +97,25 @@ class ImageUpload(Resource):
         return jsonify(success=True)
 
 
+@api.route('/login')
+class Login(Resource):
+    def post(self):
+        data = Parsers.login.parse_args()
+        user = User.query.filter_by(username=data["username"]).first()
+        if not user or not user.check_password(data["password"]):
+            # TODO login failed
+            return {'message': 'Login failed'}
+        session['id'] = user.id
+        # TODO login succeeded
+        return {'message': 'Login succeeded'}
+
+
 @api.route('/create_client')
 class CreateClient(Resource):
     def post(self):
         user = current_user()
         if not user:
-            return redirect('/')
+            return {'message': 'Login required'}
 
         client_id = gen_salt(24)
         client_id_issued_at = int(time.time())
@@ -130,7 +143,7 @@ class CreateClient(Resource):
         client.set_client_metadata(client_metadata)
         db.session.add(client)
         db.session.commit()
-        return redirect('/')
+        return {'message': 'Client created successfully', 'client_id': client.client_id, 'client_secret': client.client_secret}
 
 
 @api.route('/oauth/authorize')
