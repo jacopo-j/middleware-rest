@@ -58,6 +58,9 @@ class User(db.Model):
     def generate_hash(password):
         return sha256.hash(password)
 
+    def check_password(self, password):
+        return sha256.verify(password, self.password)
+
     @classmethod
     def exists_by_id(cls, searched_id):
         return cls.query.filter_by(id=searched_id).count() != 0
