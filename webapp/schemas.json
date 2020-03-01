@@ -1,7 +1,12 @@
 {
-  "register": "/register",
-  "users": "/users",
-  "upload": "/upload",
-  "user": "/user/{id}",
-  "image": "/user/{user_id}/image/{image_id}"
+  "register": "/api/register",
+  "users": "/api/users",
+  "upload": "/api/upload",
+  "user": "/api/user/{id}",
+  "image": "/api/user/{user_id}/image/{image_id}",
+  "login": "/auth/login",
+  "create_client": "/auth/create_client",
+  "authorize": "/auth/authorize",
+  "issue_token": "/auth/token",
+  "revoke_token": "/auth/revoke"
 }
