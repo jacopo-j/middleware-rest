@@ -66,6 +66,8 @@ class User(db.Model):
     def exists_by_username(cls, searched_username):
         return cls.query.filter_by(username=searched_username).count() != 0
 
+    def get_user_id(self):
+        return self.id
 
 def generate_guid():
     return uuid.uuid4().hex
