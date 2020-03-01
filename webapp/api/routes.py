@@ -1,6 +1,7 @@
 import uuid
 
 import boto3
+from botocore.exceptions import ClientError
 from flask import make_response, jsonify
 from flask_restplus import Resource
 from werkzeug.utils import redirect
@@ -9,7 +10,7 @@ from webapp.api.model import User, Image
 from webapp.modules import api, schemas, db, config
 from webapp.auth.oauth2 import require_oauth
 from webapp.parsers import Parsers
-from webapp.util import UserBuilder, add_self, ImageBuilder, get_mimetype, check_size_type
+from webapp.util import UserBuilder, add_self, ImageBuilder, get_mimetype, check_size_type, current_user
 
 
 @api.route(schemas["register"])
@@ -60,8 +61,7 @@ class ImagesQuery(Resource):
 class ImageUpload(Resource):
     @api.expect(Parsers.image_upload)
     def post(self):
-        # TODO change to the related authenticated user
-        user_id = 1
+        user_id = current_user().id
         bucket = boto3.resource('s3').Bucket(config['bucket_name'])
         data = Parsers.image_upload.parse_args()
         new_guid = uuid.uuid4().hex
@@ -74,6 +74,38 @@ class ImageUpload(Resource):
         db.session.add(new_image)
         db.session.commit()
         return jsonify(success=True)
+
+
+@api.route(schemas["image"].format(user_id="<user_id>", image_id="<image_id>"))
+class Image(Resource):
+    def get(self, user_id, image_id):
+        image = Image.query.filter_by(id=image_id, user_id=user_id).first()
+        response = dict()
+        response["id"] = image_id
+        response["title"] = image.title
+        response["user_id"] = user_id
+        response["url"] = config["storage"].format(bucket_name=config["bucket_name"], guid=image.guid)
+        add_self(self, schemas["image"].format(user_id=user_id, image_id=image.guid))
+        user_link = dict()
+        user_link["href"] = schemas["user"].format(id=user_id)
+        response["_links"]["user"] = user_link
+        return response
+
+    def delete(self, user_id, image_id):
+        if user_id != current_user().id:
+            return jsonify(success=False)
+        image = Image.query.filter_by(id=image_id, user_id=user_id).first()
+        if not image:
+            return jsonify(succes=False)
+        # Delete S3 Object
+        s3 = boto3.resource('s3')
+        try:
+            s3.Object(config['bucket_name'], image.guid).delete()
+        except ClientError as e:
+            return jsonify(aws_error=e.response['Error']['Code'])
+        # Delete SQL Object
+        Image.query.filter_by(id=image_id).delete()
+        db.session.commit()
 
 
 @api.route(schemas["image"].format(user_id="<user_id>", image_id="<image_id>")+"/get")
