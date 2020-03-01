@@ -1,5 +1,7 @@
+from authlib.integrations.flask_oauth2 import current_token
 from flask_restplus import Resource, reqparse, Api
-from flask import make_response, jsonify, request, session, redirect
+from flask import make_response, jsonify, request, session, redirect, render_template
+from oauthlib.oauth2 import OAuth2Error
 from sqlalchemy import func
 from .models import db, User, Image, OAuth2Client
 from webapp import schemas, config, api
@@ -49,9 +51,9 @@ class Register(Resource):
             return {'message': 'Internal error'}
 
 
-@require_oauth('list_users')
 @api.route(schemas["users"])
 class UsersQuery(Resource):
+    @require_oauth('profile')
     def get(self):
         users = [UserBuilder(id, username) for id,username in db.session.query(User.id, User.username)]
         response = dict()
@@ -60,6 +62,7 @@ class UsersQuery(Resource):
         return response
 
 
+@api.route(schemas["user"].format(id="<user_id>"))
 class ImagesQuery(Resource):
     # TODO add AUTH required
     def get(self, user_id):
@@ -128,7 +131,6 @@ class CreateClient(Resource):
         db.session.add(client)
         db.session.commit()
         return redirect('/')
-@api.route(schemas["user"].format(id="<user_id>"))
 
 
 @api.route('/oauth/authorize')
@@ -149,7 +151,3 @@ class IssueToken(Resource):
 class RevokeToken(Resource):
     def post(self):
         return authorization.create_endpoint_response('revocation')
-
-
-
-
