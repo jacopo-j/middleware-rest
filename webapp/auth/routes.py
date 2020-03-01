@@ -13,6 +13,7 @@ from webapp.util import current_user, split_by_crlf
 
 
 @api.route(schemas["login"])
+@api.doc(params={'username': 'Username', 'password': 'Password'})
 class Login(Resource):
     def post(self):
         data = Parsers.login.parse_args()
@@ -63,6 +64,10 @@ class CreateClient(Resource):
 
 @api.route(schemas["authorize"])
 class Authorize(Resource):
+    def get(self):
+        data = Parsers.authorize.parse_args()
+        user = User.query.filter_by(id=data['user_id']).first()
+        return authorization.create_authorization_response(grant_user=user)
     def post(self):
         data = Parsers.authorize.parse_args()
         user = User.query.filter_by(id=data['user_id']).first()

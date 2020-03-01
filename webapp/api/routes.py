@@ -33,6 +33,7 @@ class Register(Resource):
 
 @api.route(schemas["users"])
 class UsersQuery(Resource):
+    @api.doc(security=[{'oauth2': ['write']}])
     @require_oauth('profile')
     def get(self):
         users = [UserBuilder(id, username) for id,username in db.session.query(User.id, User.username)]
