@@ -1,8 +1,23 @@
-from webapp import schemas, config
+from flask import session
+
 import re
 import uuid
 import magic
 import sys
+
+from webapp.api.model import User
+from webapp.modules import schemas, config
+
+
+def split_by_crlf(s):
+    return [v for v in s.splitlines() if v]
+
+
+def current_user():
+    if 'id' in session:
+        uid = session['id']
+        return User.query.get(uid)
+    return None
 
 
 def add_self(object: dict, link):

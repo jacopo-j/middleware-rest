@@ -1,50 +1,8 @@
+import uuid
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
 from passlib.hash import pbkdf2_sha256 as sha256
-from flask_sqlalchemy import SQLAlchemy
-import time
-import uuid
-from authlib.integrations.sqla_oauth2 import (
-    OAuth2ClientMixin,
-    OAuth2AuthorizationCodeMixin,
-    OAuth2TokenMixin,
-)
-
-
-db = SQLAlchemy()
-
-
-class OAuth2Client(db.Model, OAuth2ClientMixin):
-    __tablename__ = 'oauth2_client'
-
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(
-        db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'))
-    user = db.relationship('User')
-
-
-class OAuth2AuthorizationCode(db.Model, OAuth2AuthorizationCodeMixin):
-    __tablename__ = 'oauth2_code'
-
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(
-        db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'))
-    user = db.relationship('User')
-
-
-class OAuth2Token(db.Model, OAuth2TokenMixin):
-    __tablename__ = 'oauth2_token'
-
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(
-        db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'))
-    user = db.relationship('User')
-
-    def is_refresh_token_active(self):
-        if self.revoked:
-            return False
-        expires_at = self.issued_at + self.expires_in * 2
-        return expires_at >= time.time()
+from ..modules import db
 
 
 class User(db.Model):
@@ -82,5 +40,3 @@ class Image(db.Model):
     guid = db.Column(db.String(32), nullable=False, unique=True, index=True, default=generate_guid)
     title = db.Column(db.String(120), nullable=False)
     user_id = db.Column(db.Integer, ForeignKey('users.id'), nullable=False)
-
-

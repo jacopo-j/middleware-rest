@@ -7,8 +7,8 @@ from authlib.integrations.sqla_oauth2 import (
 )
 from authlib.oauth2.rfc6749 import grants
 from werkzeug.security import gen_salt
-from .models import db
-from .models import User, OAuth2Client, OAuth2AuthorizationCode, OAuth2Token
+from webapp.auth.model import db, OAuth2AuthorizationCode, OAuth2Client, OAuth2Token
+from webapp.api.model import User
 
 
 class AuthorizationCodeGrant(grants.AuthorizationCodeGrant):

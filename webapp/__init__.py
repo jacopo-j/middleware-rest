@@ -1,35 +1,21 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-from authlib.integrations._client import OAuth
-from cachecontrol import cache
-from flask import Flask
-from flask_restplus import Api
 from flask_sqlalchemy import event
 from sqlalchemy.engine import Engine
-from json import load
-from .oauth2 import config_oauth
-from .models import db
-
-with open("webapp/schemas.json", "r") as fp:
-    schemas = load(fp)
-
-with open("webapp/config.json", "r") as fp:
-    config = load(fp)
-
-app = Flask(__name__)
-app.config['SECRET_KEY'] = '3205fc85cd004116bfe218f14192e49a'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-api = Api(app)
-
-# Import resources in the app context
-with app.app_context():
-    # Import resources
-    from . import resources
+from webapp.auth.oauth2 import config_oauth
+from .modules import app, db
 
 
-db.init_app(app)
-config_oauth(app)
+def create_app():
+    # Import resources in the app context
+    with app.app_context():
+        # Import resources
+        from .api import routes
+        from .auth import routes
+    # Configure db and auth
+    db.init_app(app)
+    config_oauth(app)
+    return app
 
 
 @app.before_first_request
