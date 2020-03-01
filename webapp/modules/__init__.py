@@ -16,4 +16,4 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = '3205fc85cd004116bfe218f14192e49a'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-api = Api(app)
+api = Api(app, doc="/swagger")
