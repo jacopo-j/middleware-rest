@@ -164,3 +164,26 @@ class IssueToken(Resource):
 class RevokeToken(Resource):
     def post(self):
         return authorization.create_endpoint_response('revocation')
+
+
+@api.route(schemas["image"].format(user_id="<user_id>", image_id="<image_id>"))
+class Image(Resource):
+    def get(self, user_id, image_id):
+        image = Image.query.filter_by(id=image_id, user_id=user_id).first()
+        response = dict()
+        response["id"] = image_id
+        response["title"] = image.title
+        response["user_id"] = user_id
+        response["url"] = config["storage"].format(bucket_name=config["bucket_name"], guid=image.guid)
+        add_self(self, schemas["image"].format(user_id=user_id, image_id=image.guid))
+        user_link = dict()
+        user_link["href"] = schemas["user"].format(id=user_id)
+        response["_links"]["user"] = user_link
+        return response
+
+
+@api.route(schemas["image"].format(user_id="<user_id>", image_id="<image_id>")+"/get")
+class ImageStorage(Resource):
+    def get(self, user_id, image_id):
+        image_guid = Image.query.filter_by(id=image_id, user_id=user_id).first().guid
+        redirect(config["storage"].format(bucket_name=config["bucket_name"], guid=image_guid))

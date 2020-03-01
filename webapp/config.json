@@ -1,5 +1,5 @@
 {
   "bucket_name": "middleware-rest-2020",
-  "url": "https://{bucket_name}.s3.amazonaws.com/{guid}",
+  "storage": "https://{bucket_name}.s3.amazonaws.com/{guid}",
   "max_size_kb": 1000
 }
