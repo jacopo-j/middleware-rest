@@ -1,5 +1,5 @@
 from flask import Flask
-from flask_restplus import Api
+from flask_restx import Api
 from flask_sqlalchemy import SQLAlchemy
 from json import load
 
@@ -19,9 +19,18 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 domain = app.config.get('SERVER_NAME')
 
 authorizations = {
-    'oauth2': {
+    'oauth2_password': {
         'type': 'oauth2',
         'flow': 'password',
+        'tokenUrl': schemas['issue_token'],
+        'authorizationUrl': schemas['authorize'],
+        'scopes': {
+            'profile': 'auth',
+        }
+    },
+    'oauth2_code': {
+        'type': 'oauth2',
+        'flow': 'authorizationCode',
         'tokenUrl': schemas['issue_token'],
         'authorizationUrl': schemas['authorize'],
         'scopes': {
@@ -31,5 +40,6 @@ authorizations = {
 }
 
 app.config['SWAGGER_UI_OAUTH_CLIENT_ID'] = 'documentation'
-api = Api(app, authorizations=authorizations, doc="/swagger")
+app.config['SWAGGER_UI_OAUTH_REDIRECT_URL'] = '/authorize'
+api = Api(app, authorizations=authorizations, doc="/swagger", template_folder='templates')
 

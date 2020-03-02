@@ -45,9 +45,9 @@ def init_auth_db():
 
     client_metadata = {
         "client_name": "documentation",
-        "client_uri": "https://mwrest.jaco.po.it/swagger",
+        "client_uri": "http://0.0.0.0:5000/swaggerui/oauth2-redirect.html",
         "grant_types": "password",
-        "redirect_uris": "https://mwrest.jaco.po.it/swagger",
+        "redirect_uris": "http://0.0.0.0:5000/swaggerui/oauth2-redirect.html",
         "response_types": "code",
         "scope": "profile",
         "token_endpoint_auth_method": "client_secret_basic"

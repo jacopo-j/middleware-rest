@@ -1,13 +1,13 @@
 import time
 
-from flask import session, render_template, request
-from flask_restplus import Resource
+from flask import session, render_template, request, Response
+from flask_restx import Resource
 from oauthlib.oauth2 import OAuth2Error
 from werkzeug.security import gen_salt
 
 from webapp.api.model import User
 from webapp.auth.model import OAuth2Client
-from webapp.modules import api, db, schemas
+from webapp.modules import api, db, schemas, app
 from webapp.auth.oauth2 import authorization
 from webapp.parsers import Parsers
 from webapp.util import current_user, split_by_crlf
@@ -71,9 +71,8 @@ class Authorize(Resource):
             grant = authorization.validate_consent_request(end_user=user)
         except OAuth2Error as error:
             return error.error
-        return render_template('authorize.html', user=user, grant=grant)
-        user = User.query.filter_by(id=data['user_id']).first()
-        return authorization.create_authorization_response(grant_user=user)
+        template = render_template('authorize.html', user=user, grant=grant)
+        return Response(template, mimetype='text/html')
 
     def post(self):
         user = current_user()
