@@ -21,12 +21,15 @@ domain = app.config.get('SERVER_NAME')
 authorizations = {
     'oauth2': {
         'type': 'oauth2',
-        'flow': 'authorizationCode',
+        'flow': 'password',
         'tokenUrl': schemas['issue_token'],
         'authorizationUrl': schemas['authorize'],
         'scopes': {
-            'write': 'scheme',
+            'profile': 'auth',
         }
     }
 }
+
+app.config['SWAGGER_UI_OAUTH_CLIENT_ID'] = 'documentation'
 api = Api(app, authorizations=authorizations, doc="/swagger")
+
