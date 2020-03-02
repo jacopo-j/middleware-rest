@@ -41,13 +41,13 @@ def init_auth_db():
         user_id="1",
     )
 
-    client.client_secret = ''
+    client.client_secret = 'secret'
 
     client_metadata = {
         "client_name": "documentation",
-        "client_uri": "https://swagger.com",
+        "client_uri": "https://mwrest.jaco.po.it/swagger",
         "grant_types": "password",
-        "redirect_uris": "https://swagger.com",
+        "redirect_uris": "https://mwrest.jaco.po.it/swagger",
         "response_types": "code",
         "scope": "profile",
         "token_endpoint_auth_method": "client_secret_basic"
