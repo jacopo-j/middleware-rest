@@ -71,7 +71,15 @@ class Authorize(Resource):
             grant = authorization.validate_consent_request(end_user=user)
         except OAuth2Error as error:
             return error.error
-        template = render_template('authorize.html', user=user, grant=grant)
+        req = request.values
+        template = render_template('authorize.html', user=user,
+                                   grant=grant,
+                                   client_id=req['client_id'],
+                                   scopes=req['scope'],
+                                   response_type=req['response_type'],
+                                   redirect_uri=req['redirect_uri'],
+                                   state=req['state']
+                                   )
         return Response(template, mimetype='text/html')
 
     def post(self):
