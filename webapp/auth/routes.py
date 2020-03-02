@@ -1,7 +1,8 @@
 import time
 
-from flask import session
+from flask import session, render_template, request
 from flask_restplus import Resource
+from oauthlib.oauth2 import OAuth2Error
 from werkzeug.security import gen_salt
 
 from webapp.api.model import User
@@ -65,13 +66,25 @@ class CreateClient(Resource):
 @api.route(schemas["authorize"])
 class Authorize(Resource):
     def get(self):
-        data = Parsers.authorize.parse_args()
+        user = current_user()
+        try:
+            grant = authorization.validate_consent_request(end_user=user)
+        except OAuth2Error as error:
+            return error.error
+        return render_template('authorize.html', user=user, grant=grant)
         user = User.query.filter_by(id=data['user_id']).first()
         return authorization.create_authorization_response(grant_user=user)
+
     def post(self):
-        data = Parsers.authorize.parse_args()
-        user = User.query.filter_by(id=data['user_id']).first()
-        return authorization.create_authorization_response(grant_user=user)
+        user = current_user()
+        if not user and 'username' in request.form:
+            username = request.form.get('username')
+            user = User.query.filter_by(username=username).first()
+        if request.form['confirm']:
+            grant_user = user
+        else:
+            grant_user = None
+        return authorization.create_authorization_response(grant_user=grant_user)
 
 
 @api.route(schemas["issue_token"])
