@@ -1,9 +1,14 @@
 <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Authorization</title>
+</head>
 <p>{{grant.client.client_name}} is requesting:
 <strong>{{ grant.request.scope }}</strong>
 </p>
 
-<form action="" method="post">
+<form action="/auth/authorize" method="post">
   <label>
     <input type="checkbox" name="confirm">
     <span>Consent?</span>
@@ -12,9 +17,10 @@
   <p>You haven't logged in. Log in with:</p>
   <div>
     <input type="text" name="username">
+  </div>
+  <div>
     <input type="text" name="password">
   </div>
   {% endif %}
-  <br>
   <button>Submit</button>
 </form>
