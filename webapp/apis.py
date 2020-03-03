@@ -4,15 +4,25 @@ from .api.routes import api as users
 from webapp import schemas
 
 authorizations = {
-    'oauth2': {
+    'oauth2_code': {
         'type': 'oauth2',
         'flow': 'authorizationCode',
-        'tokenUrl': '/auth'+schemas['issue_token'],
+        'tokenUrl': '/auth' + schemas['issue_token'],
+        'authorizationUrl': 'auth' + schemas['authorize'],
+        'scopes': {
+            'profile': 'auth',
+        }
+    },
+    'oauth2_password': {
+        'type': 'oauth2',
+        'flow': 'password',
+        'tokenUrl': '/auth' + schemas['issue_token'],
         'authorizationUrl': 'auth' + schemas['authorize'],
         'scopes': {
             'profile': 'auth',
         }
     }
+
 }
 
 

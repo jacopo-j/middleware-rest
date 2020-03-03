@@ -36,7 +36,7 @@ class Register(Resource):
 
 @api.route(schemas["users"])
 class UsersQuery(Resource):
-    @api.doc(security=[{'oauth2': ['write']}])
+    @api.doc(security=[{'oauth2_password': ['read']}, {'oauth2_code': ['read']}])
     @require_oauth('profile')
     def get(self):
         users = [UserBuilder(id, username) for id,username in db.session.query(User.id, User.username)]
@@ -48,7 +48,7 @@ class UsersQuery(Resource):
 
 @api.route(schemas["user"].format(id="<user_id>"))
 class ImagesQuery(Resource):
-    # TODO add AUTH required
+    @require_oauth('profile')
     def get(self, user_id):
         if not User.exists_by_id(user_id):
             return jsonify(message="User with given name doesn't exist")
@@ -82,6 +82,7 @@ class ImageUpload(Resource):
 
 @api.route(schemas["image"].format(user_id="<user_id>", image_id="<image_id>"))
 class Image(Resource):
+    @require_oauth('profile')
     def get(self, user_id, image_id):
         image = Image.query.filter_by(id=image_id, user_id=user_id).first()
         response = dict()
@@ -95,6 +96,7 @@ class Image(Resource):
         response["_links"]["user"] = user_link
         return response
 
+    @require_oauth('profile')
     def delete(self, user_id, image_id):
         if user_id != current_user().id:
             return jsonify(success=False)
@@ -114,6 +116,7 @@ class Image(Resource):
 
 @api.route(schemas["image"].format(user_id="<user_id>", image_id="<image_id>")+"/get")
 class ImageStorage(Resource):
+    @require_oauth('profile')
     def get(self, user_id, image_id):
         image_guid = Image.query.filter_by(id=image_id, user_id=user_id).first().guid
         redirect(config["storage"].format(bucket_name=config["bucket_name"], guid=image_guid))
