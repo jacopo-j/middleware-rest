@@ -1,7 +1,6 @@
 import os
 
 from flask import Flask, redirect
-from flask_restplus import Api
 from flask_sqlalchemy import SQLAlchemy
 from json import load
 

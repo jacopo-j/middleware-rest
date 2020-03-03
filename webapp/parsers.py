@@ -1,5 +1,5 @@
 from werkzeug import datastructures
-from flask_restplus import reqparse
+from flask_restx import reqparse
 
 
 class Parsers:

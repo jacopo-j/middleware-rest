@@ -3,7 +3,7 @@ import uuid
 import boto3
 from botocore.exceptions import ClientError
 from flask import make_response, jsonify
-from flask_restplus import Resource, Namespace
+from flask_restx import Resource, Namespace
 from werkzeug.utils import redirect
 
 from webapp.api.model import User, Image

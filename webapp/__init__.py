@@ -3,7 +3,7 @@
 import time
 
 from flask import request, redirect
-from flask_restplus import Api
+from flask_restx import Api
 from flask_sqlalchemy import event
 from sqlalchemy import func
 from sqlalchemy.engine import Engine

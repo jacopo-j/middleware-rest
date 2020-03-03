@@ -1,6 +1,6 @@
 import time
 from flask import session, render_template, request, Response
-from flask_restplus import Resource, Namespace
+from flask_restx import Resource, Namespace
 from oauthlib.oauth2 import OAuth2Error
 from werkzeug.security import gen_salt
 

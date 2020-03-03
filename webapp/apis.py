@@ -1,4 +1,4 @@
-from flask_restplus import Api
+from flask_restx import Api
 from .auth.routes import api as auth
 from .api.routes import api as users
 from webapp import schemas
@@ -33,11 +33,14 @@ authorizations = {
     }
 }
 
+with open("webapp/swagger_description.md", "r") as fp:
+    description = fp.read()
 
 api = Api(authorizations=authorizations,
           doc="/swagger",
           title='REST Middleware Imgur-like Demo',
-          description='A REST backend to allow users to upload images and visualize them, powered by OAuth authentication')
+          description=description)
 api.add_namespace(users, '/api')
 api.add_namespace(auth, '/auth')
+
 
