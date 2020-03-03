@@ -70,7 +70,7 @@ def before_request():
     if (
             not request.url.startswith('http://127.0.0.1') and
             not request.url.startswith('http://0.0.0.0') and
-            not request.is_secure()
+            not request.is_secure
         ):
         url = request.url.replace('http://', 'https://', 1)
         return redirect(url, code=301)

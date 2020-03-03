@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask
+from flask import Flask, redirect
 from flask_restplus import Api
 from flask_sqlalchemy import SQLAlchemy
 from json import load
@@ -28,7 +28,9 @@ except KeyError as e:
     port = config["default_port"]
 
 
-
+@app.route('/')
+def redirect_to_swagger():
+    return redirect('/swagger', 302)
 
 
 
