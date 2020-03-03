@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 import time
 
+from flask import request, redirect
 from flask_restplus import Api
 from flask_sqlalchemy import event
 from sqlalchemy.engine import Engine
@@ -61,6 +62,18 @@ def create_table():
     db.drop_all()
     db.create_all()
     init_auth_db()
+
+
+# Redirect HTTP to HTTPS when running in production
+@app.before_request
+def before_request():
+    if (
+            not request.url.startswith('http://127.0.0.1') and
+            not request.url.startswith('http://0.0.0.0') and
+            not request.is_secure()
+        ):
+        url = request.url.replace('http://', 'https://', 1)
+        return redirect(url, code=301)
 
 
 # Enable foreign key constraints checking
