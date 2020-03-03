@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 import time
 
+from flask_restplus import Api
 from flask_sqlalchemy import event
 from sqlalchemy.engine import Engine
 from werkzeug.security import gen_salt
@@ -9,19 +10,16 @@ from werkzeug.security import gen_salt
 from webapp.api.model import User
 from webapp.auth.model import OAuth2Client
 from webapp.auth.oauth2 import config_oauth
-from .modules import app, db, config, port
+from .modules import app, db, config, port, schemas
 from passlib.hash import pbkdf2_sha256 as sha256
+from .apis import api
 
 
 def create_app():
-    # Import resources in the app context
-    with app.app_context():
-        # Import resources
-        from .api import routes
-        from .auth import routes
     # Configure db and auth
     db.init_app(app)
     config_oauth(app)
+    api.init_app(app)
     return app
 
 

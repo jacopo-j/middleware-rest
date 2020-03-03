@@ -22,10 +22,10 @@
     <input type="text" name="password">
   </div>
     {% endif %}
-    <input type="text" name="client_id" value="{{ client_id }}">
-    <input type="text" name="scope" value="{{ scopes }}">
-    <input type="text" name="response_type" value="{{ response_type }}">
-    <input type="text" name="redirect_uri" value="{{ redirect_uri }}">
-    <input type="text" name="state" value="{{ state }}">
+    <input type="hidden" name="client_id" value="{{ client_id }}">
+    <input type="hidden" name="scope" value="{{ scopes }}">
+    <input type="hidden" name="response_type" value="{{ response_type }}">
+    <input type="hidden" name="redirect_uri" value="{{ redirect_uri }}">
+    <input type="hidden" name="state" value="{{ state }}">
   <button>Submit</button>
 </form>
