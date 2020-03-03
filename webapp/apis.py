@@ -21,8 +21,16 @@ authorizations = {
         'scopes': {
             'profile': 'auth',
         }
+    },
+    'oauth2_implicit': {
+        'type': 'oauth2',
+        'flow': 'implicit',
+        'tokenUrl': '/auth' + schemas['issue_token'],
+        'authorizationUrl': 'auth' + schemas['authorize'],
+        'scopes': {
+            'profile': 'auth',
+        }
     }
-
 }
 
 

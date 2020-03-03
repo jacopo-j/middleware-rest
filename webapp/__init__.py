@@ -5,6 +5,7 @@ import time
 from flask import request, redirect
 from flask_restplus import Api
 from flask_sqlalchemy import event
+from sqlalchemy import func
 from sqlalchemy.engine import Engine
 from werkzeug.security import gen_salt
 
@@ -17,7 +18,7 @@ from .apis import api
 
 
 def create_app():
-    # Configure db and auth
+    """ Configure db and auth """
     db.init_app(app)
     config_oauth(app)
     api.init_app(app)
@@ -27,34 +28,20 @@ def create_app():
 def init_auth_db():
     db.drop_all()
     db.create_all()
-    new_user = User(username="documentation",
-                    password=sha256.hash("documentation"))
-    db.session.add(new_user)
-    db.session.commit()
     client_id = "documentation"
-    client_id_issued_at = int(time.time())
-
-    client = OAuth2Client(
-        client_id=client_id,
-        client_id_issued_at=client_id_issued_at,
-        user_id="1",
-    )
-
-    client.client_secret = 'secret'
-
-    uri = "http://{}:{}/swaggerui/oauth2-redirect.html".format(config['host'], port)
-    client_metadata = {
-        "client_name": "documentation",
-        "client_uri": uri,
-        "grant_types": ["password", "authorization_code"],
-        "redirect_uris": uri,
-        "response_types": "code",
-        "scope": "profile",
-        "token_endpoint_auth_method": "client_secret_basic"
-    }
-    client.set_client_metadata(client_metadata)
-    db.session.add(client)
-    db.session.commit()
+    init_developer_client(dev_username=client_id,
+                          dev_password=client_id,
+                          client_id=client_id,
+                          grants=["password", "authorization_code"],
+                          response_types="code",
+                          auth_method="client_secret_basic")
+    client_id = "dummy"
+    init_developer_client(dev_username=client_id,
+                          dev_password=client_id,
+                          client_id=client_id,
+                          grants=["implicit"],
+                          response_types="token",
+                          auth_method="none")
 
 
 @app.before_first_request
@@ -70,8 +57,7 @@ def before_request():
     if (
             not request.url.startswith('http://127.0.0.1') and
             not request.url.startswith('http://0.0.0.0') and
-            not request.is_secure
-        ):
+            not request.is_secure):
         url = request.url.replace('http://', 'https://', 1)
         return redirect(url, code=301)
 
@@ -84,4 +70,34 @@ def _set_sqlite_pragma(dbapi_connection, connection_record):
     cursor.close()
 
 
+def init_developer_client(dev_username, dev_password, client_id, grants, response_types, auth_method):
+    """ Initialize a developer user with the related client"""
+    new_user = User(username=dev_username,
+                    password=sha256.hash(dev_password))
+    db.session.add(new_user)
+    db.session.commit()
+    new_id = db.session.query(func.max(User.id)).scalar()
+    client_id_issued_at = int(time.time())
 
+    client = OAuth2Client(
+        client_id=client_id,
+        client_id_issued_at=client_id_issued_at,
+        user_id=new_id,
+    )
+
+    # TODO Change in production
+    client.client_secret = 'secret'
+
+    uri = "http://{}:{}/swaggerui/oauth2-redirect.html".format(config['host'], port)
+    client_metadata = {
+        "client_name": dev_username,
+        "client_uri": uri,
+        "grant_types": grants,
+        "redirect_uris": uri,
+        "response_types": response_types,
+        "scope": "profile",
+        "token_endpoint_auth_method": auth_method
+    }
+    client.set_client_metadata(client_metadata)
+    db.session.add(client)
+    db.session.commit()

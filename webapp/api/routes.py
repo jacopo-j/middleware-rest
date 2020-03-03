@@ -12,7 +12,11 @@ from webapp.auth.oauth2 import require_oauth
 from webapp.parsers import Parsers
 from webapp.util import UserBuilder, add_self, ImageBuilder, get_mimetype, check_size_type, current_user
 
+# Define the Namespace for user related routes
 api = Namespace('users', description='Users related operations')
+
+# Define grants that allows to access the different resources
+security_grants = [{'oauth2_implicit': ['profile']}, {'oauth2_password': ['profile']}, {'oauth2_code': ['profile']}]
 
 
 @api.doc(params={'username': 'Username', 'password': 'Password'})
@@ -36,7 +40,7 @@ class Register(Resource):
 
 @api.route(schemas["users"])
 class UsersQuery(Resource):
-    @api.doc(security=[{'oauth2_password': ['read']}, {'oauth2_code': ['read']}])
+    @api.doc(security=security_grants)
     @require_oauth('profile')
     def get(self):
         users = [UserBuilder(id, username) for id,username in db.session.query(User.id, User.username)]
@@ -48,6 +52,7 @@ class UsersQuery(Resource):
 
 @api.route(schemas["user"].format(id="<user_id>"))
 class ImagesQuery(Resource):
+    @api.doc(security=security_grants)
     @require_oauth('profile')
     def get(self, user_id):
         if not User.exists_by_id(user_id):
@@ -63,6 +68,7 @@ class ImagesQuery(Resource):
 
 @api.route(schemas['upload'])
 class ImageUpload(Resource):
+    @api.doc(security=security_grants)
     @api.expect(Parsers.image_upload)
     def post(self):
         user_id = current_user().id
@@ -82,6 +88,7 @@ class ImageUpload(Resource):
 
 @api.route(schemas["image"].format(user_id="<user_id>", image_id="<image_id>"))
 class Image(Resource):
+    @api.doc(security=security_grants)
     @require_oauth('profile')
     def get(self, user_id, image_id):
         image = Image.query.filter_by(id=image_id, user_id=user_id).first()
@@ -96,6 +103,7 @@ class Image(Resource):
         response["_links"]["user"] = user_link
         return response
 
+    @api.doc(security=security_grants)
     @require_oauth('profile')
     def delete(self, user_id, image_id):
         if user_id != current_user().id:
@@ -116,6 +124,7 @@ class Image(Resource):
 
 @api.route(schemas["image"].format(user_id="<user_id>", image_id="<image_id>")+"/get")
 class ImageStorage(Resource):
+    @api.doc(security=security_grants)
     @require_oauth('profile')
     def get(self, user_id, image_id):
         image_guid = Image.query.filter_by(id=image_id, user_id=user_id).first().guid
