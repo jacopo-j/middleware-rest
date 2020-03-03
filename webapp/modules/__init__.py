@@ -1,3 +1,5 @@
+import os
+
 from flask import Flask
 from flask_restplus import Api
 from flask_sqlalchemy import SQLAlchemy
@@ -30,6 +32,10 @@ authorizations = {
     }
 }
 
+try:
+    port = os.environ["PORT"]
+except KeyError as e:
+    port = config["default_port"]
+
 app.config['SWAGGER_UI_OAUTH_CLIENT_ID'] = 'documentation'
 api = Api(app, authorizations=authorizations, doc="/swagger", templates='te')
-
