@@ -47,7 +47,7 @@ def init_auth_db():
     client_metadata = {
         "client_name": "documentation",
         "client_uri": uri,
-        "grant_types": "authorization_code",
+        "grant_types": ["password", "authorization_code"],
         "redirect_uris": uri,
         "response_types": "code",
         "scope": "profile",
