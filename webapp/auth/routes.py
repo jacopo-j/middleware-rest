@@ -1,16 +1,17 @@
 import time
-
 from flask import session, render_template, request, Response
-from flask_restplus import Resource
+from flask_restplus import Resource, Namespace
 from oauthlib.oauth2 import OAuth2Error
 from werkzeug.security import gen_salt
 
 from webapp.api.model import User
 from webapp.auth.model import OAuth2Client
-from webapp.modules import api, db, schemas
+from webapp.modules import db, schemas
 from webapp.auth.oauth2 import authorization
 from webapp.parsers import Parsers
 from webapp.util import current_user, split_by_crlf
+
+api = Namespace('auth', description='OAuth related operations')
 
 
 @api.route(schemas["login"])

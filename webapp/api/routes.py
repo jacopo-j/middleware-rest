@@ -3,14 +3,16 @@ import uuid
 import boto3
 from botocore.exceptions import ClientError
 from flask import make_response, jsonify
-from flask_restplus import Resource
+from flask_restplus import Resource, Namespace
 from werkzeug.utils import redirect
 
 from webapp.api.model import User, Image
-from webapp.modules import api, schemas, db, config
+from webapp.modules import schemas, db, config
 from webapp.auth.oauth2 import require_oauth
 from webapp.parsers import Parsers
 from webapp.util import UserBuilder, add_self, ImageBuilder, get_mimetype, check_size_type, current_user
+
+api = Namespace('users', description='Users related operations')
 
 
 @api.doc(params={'username': 'Username', 'password': 'Password'})
