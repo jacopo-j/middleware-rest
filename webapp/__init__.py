@@ -9,7 +9,7 @@ from werkzeug.security import gen_salt
 from webapp.api.model import User
 from webapp.auth.model import OAuth2Client
 from webapp.auth.oauth2 import config_oauth
-from .modules import app, db
+from .modules import app, db, config, port
 from passlib.hash import pbkdf2_sha256 as sha256
 
 
@@ -43,11 +43,12 @@ def init_auth_db():
 
     client.client_secret = 'secret'
 
+    uri = "http://{}:{}/swaggerui/oauth2-redirect.html".format(config['host'], port)
     client_metadata = {
         "client_name": "documentation",
-        "client_uri": "http://0.0.0.0:5000/swaggerui/oauth2-redirect.html",
+        "client_uri": uri,
         "grant_types": "authorization_code",
-        "redirect_uris": "http://0.0.0.0:5000/swaggerui/oauth2-redirect.html",
+        "redirect_uris": uri,
         "response_types": "code",
         "scope": "profile",
         "token_endpoint_auth_method": "client_secret_basic"
