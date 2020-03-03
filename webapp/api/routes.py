@@ -3,7 +3,7 @@ import uuid
 import boto3
 from botocore.exceptions import ClientError
 from flask import make_response, jsonify
-from flask_restx import Resource, Namespace
+from flask_restx import Resource, Namespace, fields
 from werkzeug.utils import redirect
 
 from webapp.api.model import User, Image
@@ -19,9 +19,10 @@ api = Namespace('users', description='Users related operations')
 security_grants = [{'oauth2_implicit': ['profile']}, {'oauth2_password': ['profile']}, {'oauth2_code': ['profile']}]
 
 
-@api.doc(params={'username': 'Username', 'password': 'Password'})
 @api.route(schemas["register"])
 class Register(Resource):
+    @api.response(200, description='Registration was successful')
+    @api.response(400, description='Registration was unsuccessful')
     @api.expect(Parsers.register, validate=True)
     def post(self):
         data = Parsers.register.parse_args()
@@ -35,11 +36,13 @@ class Register(Resource):
             return jsonify(success=True)
         except Exception as e:
             print(e)
-            return {'message': 'Internal error'}
+            return jsonify(success=False), 400
 
 
 @api.route(schemas["users"])
 class UsersQuery(Resource):
+    @api.response(200, description='List of users registered with their info')
+    @api.response(401, description='Unauthorized')
     @api.doc(security=security_grants)
     @require_oauth('profile')
     def get(self):
