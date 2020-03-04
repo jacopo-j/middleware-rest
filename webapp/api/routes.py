@@ -55,11 +55,14 @@ class UsersQuery(Resource):
 
 @api.route(schemas["user"].format(id="<user_id>"))
 class ImagesQuery(Resource):
+    @api.response(200, description="List of images of the selected user")
+    @api.response(401, description="Unauthorized")
+    @api.response(400, description="User with given name wasn't found")
     @api.doc(security=security_grants)
     @require_oauth('profile')
     def get(self, user_id):
         if not User.exists_by_id(user_id):
-            return jsonify(message="User with given name doesn't exist")
+            return jsonify(message="User with given name doesn't exist"), 400
         selected_images = Image.query.filter_by(user_id=user_id).all()
         images = [ImageBuilder(user_id, image.id, image.guid, image.title) for image in selected_images]
         response = dict()
@@ -71,8 +74,11 @@ class ImagesQuery(Resource):
 
 @api.route(schemas['upload'])
 class ImageUpload(Resource):
+    @api.response(401, description="Unauthorized")
+    @api.response(400, description="Upload wasn't successful")
+    @api.response(200, description="Upload was successful")
     @api.doc(security=security_grants)
-    @api.expect(Parsers.image_upload)
+    @api.expect(Parsers.image_upload, validate=True)
     def post(self):
         user_id = current_user().id
         bucket = boto3.resource('s3').Bucket(config['bucket_name'])
@@ -82,7 +88,7 @@ class ImageUpload(Resource):
         new_file = data['image'].read()
         new_type = get_mimetype(new_file)
         if not check_size_type(new_type, new_file):
-            return jsonify(success=False)
+            return jsonify(success=False), 400
         bucket.put_object(Body=new_file, Key=new_guid, ContentType=new_type, ACL='public-read')
         db.session.add(new_image)
         db.session.commit()
@@ -91,6 +97,9 @@ class ImageUpload(Resource):
 
 @api.route(schemas["image"].format(user_id="<user_id>", image_id="<image_id>"))
 class Image(Resource):
+    @api.response(200, description="Information about the selected image")
+    @api.response(400, description="Selected image doesn't exist")
+    @api.response(401, description="Unauthorized")
     @api.doc(security=security_grants)
     @require_oauth('profile')
     def get(self, user_id, image_id):
@@ -106,27 +115,32 @@ class Image(Resource):
         response["_links"]["user"] = user_link
         return response
 
+    @api.response(200, description="Delete was successful")
+    @api.response(400, description="An error occurred during the delete")
+    @api.response(401, description="Unauthorized")
     @api.doc(security=security_grants)
     @require_oauth('profile')
     def delete(self, user_id, image_id):
         if user_id != current_user().id:
-            return jsonify(success=False)
+            return jsonify(success=False), 401
         image = Image.query.filter_by(id=image_id, user_id=user_id).first()
         if not image:
-            return jsonify(succes=False)
+            return jsonify(succes=False), 400
         # Delete S3 Object
         s3 = boto3.resource('s3')
         try:
             s3.Object(config['bucket_name'], image.guid).delete()
         except ClientError as e:
-            return jsonify(aws_error=e.response['Error']['Code'])
+            return jsonify(aws_error=e.response['Error']['Code']), 400
         # Delete SQL Object
         Image.query.filter_by(id=image_id).delete()
         db.session.commit()
+        return jsonify(success=True)
 
 
 @api.route(schemas["image"].format(user_id="<user_id>", image_id="<image_id>")+"/get")
 class ImageStorage(Resource):
+    @api.response(200, description="Redirect to the image file")
     @api.doc(security=security_grants)
     @require_oauth('profile')
     def get(self, user_id, image_id):
