@@ -13,6 +13,7 @@ from webapp.auth.oauth2 import config_oauth
 from .modules import app, db, config, port, schemas
 from passlib.hash import pbkdf2_sha256 as sha256
 from .apis import api
+from os import environ
 
 
 def create_app():
@@ -86,8 +87,8 @@ def init_developer_client(dev_username, dev_password, client_id, grants, respons
     # TODO Change in production
     client.client_secret = 'secret'
 
-    client_uri = "http://{}:{}/swagger".format(config['host'], port)
-    redirect_uri = "http://{}:{}/swaggerui/oauth2-redirect.html".format(config['host'], port)
+    client_uri = "http://{}:{}{}".format(config['host'], port, environ['CLIENT_URL'])
+    redirect_uri = "http://{}:{}{}".format(config['host'], port, environ['REDIRECT_URL'])
     client_metadata = {
         "client_name": dev_username,
         "client_uri": client_uri,
