@@ -4,6 +4,7 @@ import boto3
 from botocore.exceptions import ClientError
 from flask import jsonify
 from flask_restx import Resource, Namespace, fields
+from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.utils import redirect
 
 from webapp.api.model import User, Image
@@ -57,7 +58,7 @@ class UsersQuery(Resource):
 class ImagesQuery(Resource):
     @api.response(200, description="List of images of the selected user")
     @api.response(401, description="Unauthorized")
-    @api.response(400, description="User with given name wasn't found")
+    @api.response(404, description="Selected user doesn't exist")
     @api.doc(security=security_grants)
     @require_oauth('profile')
     def get(self, user_id):
@@ -80,6 +81,7 @@ class ImageUpload(Resource):
     @api.doc(security=security_grants)
     @api.expect(Parsers.image_upload, validate=True)
     def post(self):
+
         user_id = current_user().id
         bucket = boto3.resource('s3').Bucket(config['bucket_name'])
         data = Parsers.image_upload.parse_args()
@@ -89,21 +91,30 @@ class ImageUpload(Resource):
         new_type = get_mimetype(new_file)
         if not check_size_type(new_type, new_file):
             return jsonify(success=False), 400
-        bucket.put_object(Body=new_file, Key=new_guid, ContentType=new_type, ACL='public-read')
-        db.session.add(new_image)
-        db.session.commit()
+        try:
+            bucket.put_object(Body=new_file, Key=new_guid, ContentType=new_type, ACL='public-read')
+        except ClientError as e:
+            return jsonify(aws_error=e.response['Error']['Code']), 400
+        try:
+            db.session.add(new_image)
+            db.session.commit()
+        except SQLAlchemyError as e:
+            boto3.resource('s3').Object(config['bucket_name'], new_guid).delete()
+            return jsonify(success=False)
         return jsonify(success=True)
 
 
 @api.route(schemas["image"].format(user_id="<user_id>", image_id="<image_id>"))
 class Image(Resource):
     @api.response(200, description="Information about the selected image")
-    @api.response(400, description="Selected image doesn't exist")
+    @api.response(404, description="Selected image doesn't exist")
     @api.response(401, description="Unauthorized")
     @api.doc(security=security_grants)
     @require_oauth('profile')
     def get(self, user_id, image_id):
         image = Image.query.filter_by(id=image_id, user_id=user_id).first()
+        if not image:
+            return jsonify(message="Selected image doesn't exist")
         response = dict()
         response["id"] = image_id
         response["title"] = image.title
@@ -116,6 +127,7 @@ class Image(Resource):
         return response
 
     @api.response(200, description="Delete was successful")
+    @api.response(404, description="Selected image doesn't exist")
     @api.response(400, description="An error occurred during the delete")
     @api.response(401, description="Unauthorized")
     @api.doc(security=security_grants)
@@ -125,7 +137,7 @@ class Image(Resource):
             return jsonify(success=False), 401
         image = Image.query.filter_by(id=image_id, user_id=user_id).first()
         if not image:
-            return jsonify(succes=False), 400
+            return jsonify(succes=False), 404
         # Delete S3 Object
         s3 = boto3.resource('s3')
         try:
@@ -138,11 +150,14 @@ class Image(Resource):
         return jsonify(success=True)
 
 
-@api.route(schemas["image"].format(user_id="<user_id>", image_id="<image_id>")+"/get")
+@api.route(schemas["image"].format(user_id="<user_id>", image_id="<image_guid>")+"/get")
 class ImageStorage(Resource):
     @api.response(200, description="Redirect to the image file")
+    @api.response(404, description="Selected image doesn't exist")
     @api.doc(security=security_grants)
     @require_oauth('profile')
-    def get(self, user_id, image_id):
-        image_guid = Image.query.filter_by(id=image_id, user_id=user_id).first().guid
-        redirect(config["storage"].format(bucket_name=config["bucket_name"], guid=image_guid))
+    def get(self, user_id, image_guid):
+        image = Image.query.filter_by(id=image_guid, user_id=user_id).first()
+        if not image:
+            return jsonify(message="Selected image doesn't exist"), 400
+        redirect(config["storage"].format(bucket_name=config["bucket_name"], guid=image.guid))
