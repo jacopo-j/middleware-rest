@@ -88,12 +88,13 @@ def init_developer_client(dev_username, dev_password, client_id, grants, respons
     # TODO Change in production
     client.client_secret = 'secret'
 
-    uri = "http://{}:{}/swaggerui/oauth2-redirect.html".format(config['host'], port)
+    client_uri = "http://{}:{}/swagger".format(config['host'], port)
+    redirect_uri = "http://{}:{}/swaggerui/oauth2-redirect.html".format(config['host'], port)
     client_metadata = {
         "client_name": dev_username,
-        "client_uri": uri,
+        "client_uri": client_uri,
         "grant_types": grants,
-        "redirect_uris": uri,
+        "redirect_uris": redirect_uri,
         "response_types": response_types,
         "scope": "profile",
         "token_endpoint_auth_method": auth_method

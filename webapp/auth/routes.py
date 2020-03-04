@@ -17,6 +17,7 @@ api = Namespace('auth', description='OAuth related operations')
 @api.route(schemas["login"])
 @api.doc(params={'username': 'Username', 'password': 'Password'})
 class Login(Resource):
+    @api.expect(Parsers.login, validate=True)
     def post(self):
         data = Parsers.login.parse_args()
         user = User.query.filter_by(username=data["username"]).first()
@@ -30,6 +31,7 @@ class Login(Resource):
 
 @api.route(schemas["create_client"])
 class CreateClient(Resource):
+    @api.expect(Parsers.create_client)
     def post(self):
         user = current_user()
         if not user:
