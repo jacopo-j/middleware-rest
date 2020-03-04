@@ -1,4 +1,4 @@
-import os
+from os import environ
 
 from flask import Flask, redirect
 from flask_sqlalchemy import SQLAlchemy
@@ -21,10 +21,9 @@ app.config['SWAGGER_UI_OAUTH_CLIENT_ID'] = 'documentation'
 domain = app.config.get('SERVER_NAME')
 
 
-try:
-    port = os.environ["PORT"]
-except KeyError as e:
-    port = config["default_port"]
+port = environ.get('PORT', config["default_port"])
+redirect_uri = environ.get('REDIRECT_URI', config["redirect_uri"])
+client_uri = environ.get('CLIENT_URI', config["client_uri"])
 
 
 @app.route('/')
