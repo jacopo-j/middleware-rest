@@ -8,7 +8,7 @@ authorizations = {
         'type': 'oauth2',
         'flow': 'authorizationCode',
         'tokenUrl': '/auth' + schemas['issue_token'],
-        'authorizationUrl': 'auth' + schemas['authorize'],
+        'authorizationUrl': '/auth' + schemas['authorize'],
         'scopes': {
             'profile': 'auth',
         }
@@ -17,7 +17,7 @@ authorizations = {
         'type': 'oauth2',
         'flow': 'password',
         'tokenUrl': '/auth' + schemas['issue_token'],
-        'authorizationUrl': 'auth' + schemas['authorize'],
+        'authorizationUrl': '/auth' + schemas['authorize'],
         'scopes': {
             'profile': 'auth',
         }
@@ -26,7 +26,7 @@ authorizations = {
         'type': 'oauth2',
         'flow': 'implicit',
         'tokenUrl': '/auth' + schemas['issue_token'],
-        'authorizationUrl': 'auth' + schemas['authorize'],
+        'authorizationUrl': '/auth' + schemas['authorize'],
         'scopes': {
             'profile': 'auth',
         }

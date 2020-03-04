@@ -2,7 +2,7 @@ import uuid
 
 import boto3
 from botocore.exceptions import ClientError
-from flask import make_response, jsonify
+from flask import jsonify
 from flask_restx import Resource, Namespace, fields
 from werkzeug.utils import redirect
 
