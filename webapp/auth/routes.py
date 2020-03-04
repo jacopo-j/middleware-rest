@@ -1,5 +1,5 @@
 import time
-from flask import session, render_template, request, Response
+from flask import session, render_template, request, Response, jsonify
 from flask_restx import Resource, Namespace
 from oauthlib.oauth2 import OAuth2Error
 from werkzeug.security import gen_salt
@@ -70,10 +70,7 @@ class CreateClient(Resource):
 class Authorize(Resource):
     def get(self):
         user = current_user()
-        try:
-            grant = authorization.validate_consent_request(end_user=user)
-        except OAuth2Error as error:
-            return error.error
+        grant = oauth_operation(authorization.validate_consent_request(end_user=user))
         req = request.values
         template = render_template('authorize.html', user=user,
                                    grant=grant,
@@ -94,16 +91,23 @@ class Authorize(Resource):
             grant_user = user
         else:
             grant_user = None
-        return authorization.create_authorization_response(grant_user=grant_user)
+        return oauth_operation(authorization.create_authorization_response(grant_user=grant_user))
 
 
 @api.route(schemas["issue_token"])
 class IssueToken(Resource):
     def post(self):
-        return authorization.create_token_response()
+        return oauth_operation(authorization.create_token_response())
 
 
 @api.route(schemas["revoke_token"])
 class RevokeToken(Resource):
     def post(self):
-        return authorization.create_endpoint_response('revocation')
+        return oauth_operation(authorization.create_endpoint_response('revocation'))
+
+
+def oauth_operation(operation):
+    try:
+        return operation
+    except OAuth2Error as error:
+        return jsonify(error=error.error, description=error.description)
