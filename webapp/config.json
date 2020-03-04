@@ -3,5 +3,7 @@
   "storage": "https://{bucket_name}.s3.amazonaws.com/{guid}",
   "max_size_kb": 1000,
   "host": "0.0.0.0",
-  "default_port": "5000"
+  "default_port": "5000",
+  "redirect_uri": "http://0.0.0.0:5000/swaggerui/oauth2-redirect.html",
+  "client_uri": "http://0.0.0.0:5000/swagger"
 }
