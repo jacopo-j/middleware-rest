@@ -1,9 +1,5 @@
-import time
-
 from flask import session
-
 import re
-import uuid
 import magic
 import sys
 
