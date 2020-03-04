@@ -2,9 +2,6 @@ from flask import session
 import re
 import magic
 import sys
-
-from werkzeug.security import gen_salt
-
 from webapp.api.model import User
 from webapp.modules import schemas, config
 

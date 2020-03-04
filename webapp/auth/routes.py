@@ -1,7 +1,8 @@
 import time
+
+from authlib.oauth2 import OAuth2Error
 from flask import session, render_template, request, Response, jsonify
 from flask_restx import Resource, Namespace
-from oauthlib.oauth2 import OAuth2Error
 from werkzeug.security import gen_salt
 
 from webapp.api.model import User
@@ -63,23 +64,30 @@ class CreateClient(Resource):
         client.set_client_metadata(client_metadata)
         db.session.add(client)
         db.session.commit()
-        return {'message': 'Client created successfully', 'client_id': client.client_id, 'client_secret': client.client_secret}
+        return {'message': 'Client created successfully', 'client_id': client.client_id,
+                'client_secret': client.client_secret}
 
 
 @api.route(schemas["authorize"])
 class Authorize(Resource):
     def get(self):
         user = current_user()
-        grant = oauth_operation(authorization.validate_consent_request(end_user=user))
+        try:
+            authorization.validate_consent_request(end_user=user)
+        except OAuth2Error as e:
+            return jsonify(error=e.error, description=e.description)
         req = request.values
-        template = render_template('authorize.html', user=user,
-                                   grant=grant,
-                                   client_id=req['client_id'],
-                                   scopes=req['scope'],
-                                   response_type=req['response_type'],
-                                   redirect_uri=req['redirect_uri'],
-                                   state=req['state']
-                                   )
+        try:
+            template = render_template('authorize.html',
+                                       user=user,
+                                       grant=grant,
+                                       client_id=req['client_id'],
+                                       scopes=req['scope'],
+                                       response_type=req['response_type'],
+                                       redirect_uri=req['redirect_uri'],
+                                       state=req['state'])
+        except Exception as e:
+            jsonify(message="Exception occurred during template generation")
         return Response(template, mimetype='text/html')
 
     def post(self):
@@ -91,23 +99,23 @@ class Authorize(Resource):
             grant_user = user
         else:
             grant_user = None
-        return oauth_operation(authorization.create_authorization_response(grant_user=grant_user))
+        return oauth_op(authorization.create_authorization_response, grant_user=grant_user)
 
 
 @api.route(schemas["issue_token"])
 class IssueToken(Resource):
     def post(self):
-        return oauth_operation(authorization.create_token_response())
+        return oauth_op(authorization.create_token_response)
 
 
 @api.route(schemas["revoke_token"])
 class RevokeToken(Resource):
     def post(self):
-        return oauth_operation(authorization.create_endpoint_response('revocation'))
+        return oauth_op(authorization.create_endpoint_response, 'revocation')
 
 
-def oauth_operation(operation):
+def oauth_op(operation, *args, **kwargs):
     try:
-        return operation
+        return operation(*args, **kwargs)
     except OAuth2Error as error:
         return jsonify(error=error.error, description=error.description)
