@@ -11,7 +11,7 @@ from webapp.api.model import User, Image
 from webapp.modules import schemas, db, config
 from webapp.auth.oauth2 import require_oauth
 from webapp.parsers import Parsers
-from webapp.util import UserBuilder, add_self, ImageBuilder, get_mimetype, check_size_type, current_user
+from webapp.util import UserBuilder, add_self, ImageBuilder, get_mimetype, check_size_type
 from .marshaller import api, Marshaller
 
 # Define grants that allows to access the different resources
@@ -79,7 +79,7 @@ class ImageUpload(Resource):
     @api.expect(Parsers.image_upload, validate=True)
     @require_oauth('profile')
     def post(self):
-        user_id = current_token.id
+        user_id = current_token.user.id
         bucket = boto3.resource('s3').Bucket(config['bucket_name'])
         data = Parsers.image_upload.parse_args()
         new_guid = uuid.uuid4().hex
@@ -101,23 +101,24 @@ class ImageUpload(Resource):
         return {'success': True}, 200
 
 
-@api.route(schemas["image"].format(user_id="<user_id>", image_guid="<image_guid>"))
-class Image(Resource):
+@api.route(schemas["image"].format(user_id="<user_id>", image_id="<image_id>"))
+class ImageQuery(Resource):
     @api.response(200, description="Information about the selected image")
     @api.response(404, description="Selected image doesn't exist")
     @api.response(401, description="Unauthorized")
     @api.doc(security=security_grants)
     @require_oauth('profile')
-    def get(self, user_id, image_guid):
-        image = Image.query.filter_by(id=image_guid, user_id=user_id).first()
+    def get(self, user_id, image_id):
+        image = Image.query.filter_by(id=image_id, user_id=user_id).first()
         if not image:
             return {'message': "Selected image doesn't exist"}
         response = dict()
-        response["id"] = image_guid
+        response['id'] = image_id
+        response["guid"] = image.guid
         response["title"] = image.title
         response["user_id"] = user_id
         response["url"] = config["storage"].format(bucket_name=config["bucket_name"], guid=image.guid)
-        add_self(self, schemas["image"].format(user_id=user_id, image_guid=image.guid))
+        add_self(response, schemas["image"].format(user_id=user_id, image_id=image_id))
         user_link = dict()
         user_link["href"] = schemas["user"].format(id=user_id)
         response["_links"]["user"] = user_link
@@ -129,10 +130,10 @@ class Image(Resource):
     @api.response(401, description="Unauthorized")
     @api.doc(security=security_grants)
     @require_oauth('profile')
-    def delete(self, user_id, image_guid):
-        if user_id != current_user().id:
+    def delete(self, user_id, image_id):
+        if user_id != str(current_token.user.id):
             return {'success': False}, 401
-        image = Image.query.filter_by(id=image_guid, user_id=user_id).first()
+        image = Image.query.filter_by(id=image_id, user_id=user_id).first()
         if not image:
             return {'success': False}, 404
         # Delete S3 Object
@@ -142,19 +143,19 @@ class Image(Resource):
         except ClientError as e:
             return {'aws_error': e.response['Error']['Code']}, 400
         # Delete SQL Object
-        Image.query.filter_by(id=image_guid).delete()
+        Image.query.filter_by(id=image_id).delete()
         db.session.commit()
         return {'success': True}
 
 
-@api.route(schemas["image"].format(user_id="<user_id>", image_guid="<image_guid>")+"/get")
+@api.route(schemas["image"].format(user_id="<user_id>", image_id="<image_id>")+"/get")
 class ImageStorage(Resource):
     @api.response(200, description="Redirect to the image file")
     @api.response(404, description="Selected image doesn't exist")
     @api.doc(security=security_grants)
     @require_oauth('profile')
-    def get(self, user_id, image_guid):
-        image = Image.query.filter_by(id=image_guid, user_id=user_id).first()
+    def get(self, user_id, image_id):
+        image = Image.query.filter_by(id=image_id, user_id=user_id).first()
         if not image:
             return {'message': "Selected image doesn't exist"}, 400
         redirect(config["storage"].format(bucket_name=config["bucket_name"], guid=image.guid))
