@@ -47,8 +47,6 @@ def init_auth_db():
 
 @app.before_first_request
 def create_table():
-    db.drop_all()
-    db.create_all()
     init_auth_db()
 
 

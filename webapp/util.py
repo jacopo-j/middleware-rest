@@ -39,7 +39,7 @@ class ImageBuilder(dict):
         self["id"] = image_id
         self["title"] = title
         self["guid"] = guid
-        add_self(self, schemas["image"].format(user_id=user_id, image_id=guid))
+        add_self(self, schemas["image"].format(user_id=user_id, image_id=image_id))
 
 
 def check_size_type(new_type, data: bytes):
