@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from flask_restx import Api
 from .auth.routes import api as auth
 from .api.routes import api as users
@@ -32,8 +34,8 @@ authorizations = {
         }
     }
 }
-
-with open("webapp/swagger_description.md", "r") as fp:
+path = Path(__file__).parent
+with open(path / "swagger_description.md", "r") as fp:
     description = fp.read()
 
 api = Api(authorizations=authorizations,

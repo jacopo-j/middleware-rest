@@ -3,14 +3,18 @@ from os import environ
 from flask import Flask, redirect
 from flask_sqlalchemy import SQLAlchemy
 from json import load
+from pathlib import Path
+
+
+path = Path(__file__).parent
 
 
 db = SQLAlchemy()
 
-with open("webapp/schemas.json", "r") as fp:
+with open(path / "../schemas.json", "r") as fp:
     schemas = load(fp)
 
-with open("webapp/config.json", "r") as fp:
+with open(path / "../config.json", "r") as fp:
     config = load(fp)
 
 app = Flask(__name__, template_folder="templates")
