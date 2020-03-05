@@ -7,4 +7,4 @@ from webapp.modules import port
 
 if __name__ == "__main__":
     app = create_app()
-    app.run(host=config['host'], port=port)
+    app.run(host=config["host"], port=port)

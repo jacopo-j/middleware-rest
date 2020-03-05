@@ -12,11 +12,13 @@ from webapp.auth.oauth2 import authorization
 from webapp.parsers import Parsers
 from webapp.util import current_user, split_by_crlf
 
-api = Namespace('auth', description='OAuth related operations')
+api = Namespace("auth", description="OAuth related operations")
 
 
 @api.route(schemas["login"])
-@api.doc(params={'username': 'Username', 'password': 'Password'})
+@api.doc(params={"username": "Username", "password": "Password"})
+@api.response(200, description="Login was successful")
+@api.response(401, description="Login was unsuccessful")
 class Login(Resource):
     @api.expect(Parsers.login, validate=True)
     def post(self):
@@ -24,10 +26,10 @@ class Login(Resource):
         user = User.query.filter_by(username=data["username"]).first()
         if not user or not user.check_password(data["password"]):
             # TODO login failed
-            return {'message': 'Login failed'}
-        session['id'] = user.id
+            return {"message": "Login failed"}, 401
+        session["id"] = user.id
         # TODO login succeeded
-        return {'message': 'Login succeeded'}
+        return {"message": "Login succeeded"}
 
 
 @api.route(schemas["create_client"])
@@ -36,7 +38,7 @@ class CreateClient(Resource):
     def post(self):
         user = current_user()
         if not user:
-            return {'message': 'Login required'}
+            return {"message": "Login required"}
 
         client_id = gen_salt(24)
         client_id_issued_at = int(time.time())
@@ -46,8 +48,8 @@ class CreateClient(Resource):
             user_id=user.id,
         )
 
-        if client.token_endpoint_auth_method == 'none':
-            client.client_secret = ''
+        if client.token_endpoint_auth_method == "none":
+            client.client_secret = ""
         else:
             client.client_secret = gen_salt(48)
 
@@ -64,40 +66,38 @@ class CreateClient(Resource):
         client.set_client_metadata(client_metadata)
         db.session.add(client)
         db.session.commit()
-        return {'message': 'Client created successfully', 'client_id': client.client_id,
-                'client_secret': client.client_secret}
+        return {"message": "Client created successfully", "client_id": client.client_id,
+                "client_secret": client.client_secret}
 
 
 @api.route(schemas["authorize"])
 class Authorize(Resource):
     def get(self):
         user = current_user()
-        grant = None
         try:
             grant = authorization.validate_consent_request(end_user=user)
         except OAuth2Error as e:
-            return {'error': e.error, 'description': e.description}, 401
+            return {"error": e.error, "description": e.description}, 401
         req = request.values
-        template = None
         try:
-            template = render_template('authorize.html',
+            template = render_template("authorize.html",
                                        user=user,
                                        grant=grant,
-                                       client_id=req['client_id'],
-                                       scopes=req['scope'],
-                                       response_type=req['response_type'],
-                                       redirect_uri=req['redirect_uri'],
-                                       state=req['state'])
-        except Exception as e:
-            return {'message': "Exception occurred during template generation"}, 400
-        return Response(template, mimetype='text/html')
+                                       client_id=req["client_id"],
+                                       scopes=req["scope"],
+                                       response_type=req["response_type"],
+                                       redirect_uri=req["redirect_uri"],
+                                       state=req["state"])
+        except Exception:
+            return {"message": "Exception occurred during template generation"}, 400
+        return Response(template, mimetype="text/html")
 
     def post(self):
         user = current_user()
-        if not user and 'username' in request.form:
-            username = request.form.get('username')
+        if not user and "username" in request.form:
+            username = request.form.get("username")
             user = User.query.filter_by(username=username).first()
-        if request.form['confirm']:
+        if request.form["confirm"]:
             grant_user = user
         else:
             grant_user = None
@@ -113,11 +113,11 @@ class IssueToken(Resource):
 @api.route(schemas["revoke_token"])
 class RevokeToken(Resource):
     def post(self):
-        return oauth_op(authorization.create_endpoint_response, 'revocation')
+        return oauth_op(authorization.create_endpoint_response, "revocation")
 
 
 def oauth_op(operation, *args, **kwargs):
     try:
         return operation(*args, **kwargs)
     except OAuth2Error as error:
-        return {'error': error.error, 'description': error.description}, 401
+        return {"error": error.error, "description": error.description}, 401

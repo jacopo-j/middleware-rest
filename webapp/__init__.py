@@ -15,7 +15,6 @@ from .modules import (
 )
 from passlib.hash import pbkdf2_sha256 as sha256
 from .apis import api
-from os import environ
 
 
 def create_app():
@@ -54,11 +53,11 @@ def create_table():
 @app.before_request
 def before_request():
     if (
-            not request.url.startswith('http://127.0.0.1') and
-            not request.url.startswith('http://0.0.0.0') and
+            not request.url.startswith("http://127.0.0.1") and
+            not request.url.startswith("http://0.0.0.0") and
             not request.is_secure):
-        url = request.url.replace('http://', 'https://', 1)
-        return redirect(url, code=301)
+        url = request.url.replace("http://", "https://", 1)
+        return redirect(url, code=307)
 
 
 # Enable foreign key constraints checking
@@ -85,7 +84,7 @@ def init_developer_client(dev_username, dev_password, client_id, grants, respons
     )
 
     # TODO Change in production
-    client.client_secret = 'secret'
+    client.client_secret = "secret"
 
     client_metadata = {
         "client_name": dev_username,

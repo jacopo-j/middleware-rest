@@ -12,6 +12,9 @@ from webapp.api.model import User
 
 
 class AuthorizationCodeGrant(grants.AuthorizationCodeGrant):
+    def save_authorization_code(self, code, request):
+        raise NotImplementedError
+
     def create_authorization_code(self, client, grant_user, request):
         code = gen_salt(48)
         item = OAuth2AuthorizationCode(
