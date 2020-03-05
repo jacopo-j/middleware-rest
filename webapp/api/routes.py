@@ -53,7 +53,7 @@ class UsersQuery(Resource):
 
 @api.route(schemas["user"].format(id="<user_id>"))
 class ImagesQuery(Resource):
-    @api.response(200, description="List of images of the selected user")
+    @api.response(200, description="List of images of the selected user", model=Marshaller.user_images)
     @api.response(401, description="Unauthorized")
     @api.response(404, description="Selected user doesn't exist")
     @api.doc(security=security_grants)
@@ -61,10 +61,10 @@ class ImagesQuery(Resource):
     def get(self, user_id):
         if not User.exists_by_id(user_id):
             return {'message': "User with given name doesn't exist"}, 400
+        selected_user = User.query.filter_by(id=user_id).first()
         selected_images = Image.query.filter_by(user_id=user_id).all()
         images = [ImageBuilder(user_id, image.id, image.guid, image.title) for image in selected_images]
-        response = dict()
-        response["id"] = user_id
+        response = UserBuilder(user_id, selected_user.username)
         response["images"] = images
         add_self(response, schemas["user"].format(id=user_id))
         return response
@@ -103,7 +103,7 @@ class ImageUpload(Resource):
 
 @api.route(schemas["image"].format(user_id="<user_id>", image_id="<image_id>"))
 class ImageQuery(Resource):
-    @api.response(200, description="Information about the selected image")
+    @api.response(200, description="Information about the selected image", model=Marshaller.single_image)
     @api.response(404, description="Selected image doesn't exist")
     @api.response(401, description="Unauthorized")
     @api.doc(security=security_grants)
@@ -116,7 +116,6 @@ class ImageQuery(Resource):
         response['id'] = image_id
         response["guid"] = image.guid
         response["title"] = image.title
-        response["user_id"] = user_id
         response["url"] = config["storage"].format(bucket_name=config["bucket_name"], guid=image.guid)
         add_self(response, schemas["image"].format(user_id=user_id, image_id=image_id))
         user_link = dict()
