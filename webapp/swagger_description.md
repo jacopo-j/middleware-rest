@@ -9,7 +9,7 @@ Real life example of a scalable image server with OAuth authentication, featurin
 
 # Explore
 You can start your journey by registering an account, using `/register` in the `api` Namespace.
-Now, you may want to click `Authorize` to get the *really* important OAuth authentication! You can set up your own client using `/create_client` in the auth Namespace, but we were kind enough to register already two Clients, with the following client_id (client_secrets are `secret`, don't do this in production!):
+Now, you may want to click `Authorize` to get the *really* important OAuth authentication! You can set up your own client using `/create_client` in the auth Namespace, but we were kind enough to register already two Clients, with the following client_id (client_secrets is `secret` for both of them, don't do this in production!):
 - `documentation`, enabling the AuthorizationCode and Password flow
 - `dummy`, enabling the [*unsafe(?)*](https://tools.ietf.org/html/draft-ietf-oauth-security-topics-09) Implicit flow
 
