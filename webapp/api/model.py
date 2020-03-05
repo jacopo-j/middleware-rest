@@ -6,7 +6,7 @@ from ..modules import db
 
 
 class User(db.Model):
-    __tablename__ = 'users'
+    __tablename__ = "users"
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(120), nullable=False, unique=True, index=True)
     password = db.Column(db.String(120), nullable=False)
@@ -30,13 +30,14 @@ class User(db.Model):
     def get_user_id(self):
         return self.id
 
+
 def generate_guid():
     return uuid.uuid4().hex
 
 
 class Image(db.Model):
-    __tablename__ = 'images'
+    __tablename__ = "images"
     id = db.Column(db.Integer, primary_key=True)
     guid = db.Column(db.String(32), nullable=False, unique=True, index=True, default=generate_guid)
     title = db.Column(db.String(120), nullable=False)
-    user_id = db.Column(db.Integer, ForeignKey('users.id'), nullable=False)
+    user_id = db.Column(db.Integer, ForeignKey("users.id"), nullable=False)
