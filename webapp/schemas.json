@@ -3,7 +3,7 @@
   "users": "/users",
   "upload": "/upload",
   "user": "/user/{id}",
-  "image": "/user/{user_id}/image/{image_id}",
+  "image": "/user/{user_id}/image/{image_guid}",
   "login": "/login",
   "create_client": "/create_client",
   "authorize": "/authorize",

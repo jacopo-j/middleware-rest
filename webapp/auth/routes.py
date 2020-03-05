@@ -1,7 +1,7 @@
 import time
 
 from authlib.oauth2 import OAuth2Error
-from flask import session, render_template, request, Response, jsonify
+from flask import session, render_template, request, Response
 from flask_restx import Resource, Namespace
 from werkzeug.security import gen_salt
 
@@ -72,11 +72,13 @@ class CreateClient(Resource):
 class Authorize(Resource):
     def get(self):
         user = current_user()
+        grant = None
         try:
-            authorization.validate_consent_request(end_user=user)
+            grant = authorization.validate_consent_request(end_user=user)
         except OAuth2Error as e:
-            return jsonify(error=e.error, description=e.description)
+            return {'error': e.error, 'description': e.description}, 401
         req = request.values
+        template = None
         try:
             template = render_template('authorize.html',
                                        user=user,
@@ -87,7 +89,7 @@ class Authorize(Resource):
                                        redirect_uri=req['redirect_uri'],
                                        state=req['state'])
         except Exception as e:
-            jsonify(message="Exception occurred during template generation")
+            return {'message': "Exception occurred during template generation"}, 400
         return Response(template, mimetype='text/html')
 
     def post(self):
@@ -118,4 +120,4 @@ def oauth_op(operation, *args, **kwargs):
     try:
         return operation(*args, **kwargs)
     except OAuth2Error as error:
-        return jsonify(error=error.error, description=error.description)
+        return {'error': error.error, 'description': error.description}, 401
