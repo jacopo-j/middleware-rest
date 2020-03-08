@@ -33,12 +33,14 @@ class Login(Resource):
 
 
 @api.route(schemas["create_client"])
+@api.response(200, description="Client creation successful")
+@api.response(401, description="Unauthorized")
 class CreateClient(Resource):
     @api.expect(Parsers.create_client)
     def post(self):
         user = current_user()
         if not user:
-            return {"message": "Login required"}
+            return {"message": "Login required"}, 401
 
         client_id = gen_salt(24)
         client_id_issued_at = int(time.time())
