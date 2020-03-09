@@ -1,4 +1,5 @@
 import io
+import os
 
 import boto3
 import pytest
@@ -35,8 +36,18 @@ TEST_TOKEN_DATA = {
 oauth_client = None
 oauth_token = ""
 
+
+@pytest.fixture(scope='module')
+def aws_credentials():
+    """Mocked AWS Credentials for moto."""
+    os.environ['AWS_ACCESS_KEY_ID'] = 'testing'
+    os.environ['AWS_SECRET_ACCESS_KEY'] = 'testing'
+    os.environ['AWS_SECURITY_TOKEN'] = 'testing'
+    os.environ['AWS_SESSION_TOKEN'] = 'testing'
+
+
 @pytest.fixture(scope="module", autouse=True)
-def moto_boto():
+def moto_boto(aws_credentials):
     # setup: start moto server and create the bucket
     mocks3 = mock_s3()
     mocks3.start()
