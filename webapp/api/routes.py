@@ -15,7 +15,7 @@ from webapp.util import UserBuilder, add_self, ImageBuilder, get_mimetype, check
 from .marshaller import api, Marshaller
 
 # Define grants that allows to access the different resources
-security_grants = [{"oauth2_implicit": ["profile"]}, {"oauth2_password": ["profile"]}, {"oauth2_code": ["profile"]}]
+security_grants = [{"oauth2_implicit": ["read"]}, {"oauth2_password": ["read write"]}, {"oauth2_code": ["read write"]}]
 
 
 @api.route(schemas["register"])
@@ -41,7 +41,7 @@ class Register(Resource):
 @api.route(schemas["users"])
 class UsersQuery(Resource):
     @api.doc(security=security_grants)
-    @require_oauth("profile")
+    @require_oauth("read")
     @api.response(200, description="List of users", model=Marshaller.users)
     @api.response(401, description="Unauthorized")
     def get(self):
@@ -58,7 +58,7 @@ class ImagesQuery(Resource):
     @api.response(401, description="Unauthorized")
     @api.response(404, description="Selected user doesn't exist")
     @api.doc(security=security_grants)
-    @require_oauth("profile")
+    @require_oauth("read")
     def get(self, user_id):
         if not User.exists_by_id(user_id):
             return {"message": "User with given name doesn't exist"}, 400
@@ -78,7 +78,7 @@ class ImageUpload(Resource):
     @api.response(200, description="Upload was successful")
     @api.doc(security=security_grants)
     @api.expect(Parsers.image_upload, validate=True)
-    @require_oauth("profile")
+    @require_oauth("write")
     def post(self):
         user_id = current_token.user.id
         bucket = boto3.resource("s3").Bucket(config["bucket_name"])
@@ -108,7 +108,7 @@ class ImageQuery(Resource):
     @api.response(404, description="Selected image doesn't exist")
     @api.response(401, description="Unauthorized")
     @api.doc(security=security_grants)
-    @require_oauth("profile")
+    @require_oauth("read")
     def get(self, user_id, image_id):
         image = Image.query.filter_by(id=image_id, user_id=user_id).first()
         if not image:
@@ -129,7 +129,7 @@ class ImageQuery(Resource):
     @api.response(400, description="An error occurred during the delete")
     @api.response(401, description="Unauthorized")
     @api.doc(security=security_grants)
-    @require_oauth("profile")
+    @require_oauth("write")
     def delete(self, user_id, image_id):
         if user_id != str(current_token.user.id):
             return {"success": False}, 401
@@ -153,7 +153,7 @@ class ImageStorage(Resource):
     @api.response(200, description="Redirect to the image file")
     @api.response(404, description="Selected image doesn't exist")
     @api.doc(security=security_grants)
-    @require_oauth("profile")
+    @require_oauth("read")
     def get(self, user_id, image_id):
         image = Image.query.filter_by(id=image_id, user_id=user_id).first()
         if not image:

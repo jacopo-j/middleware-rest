@@ -33,14 +33,14 @@ def init_auth_db():
                           dev_password=client_id,
                           client_id=client_id,
                           grants=["password", "authorization_code"],
-                          response_types="code",
+                          response_types=["code"],
                           auth_method="client_secret_basic")
     client_id = "dummy"
     init_developer_client(dev_username=client_id,
                           dev_password=client_id,
                           client_id=client_id,
                           grants=["implicit"],
-                          response_types="token",
+                          response_types=["token"],
                           auth_method="none")
 
 
@@ -90,9 +90,9 @@ def init_developer_client(dev_username, dev_password, client_id, grants, respons
         "client_name": dev_username,
         "client_uri": client_uri,
         "grant_types": grants,
-        "redirect_uris": redirect_uri,
+        "redirect_uris": [redirect_uri],
         "response_types": response_types,
-        "scope": "profile",
+        "scope": "read write",
         "token_endpoint_auth_method": auth_method
     }
     client.set_client_metadata(client_metadata)
