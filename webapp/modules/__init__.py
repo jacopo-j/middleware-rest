@@ -1,5 +1,6 @@
 from os import environ
 
+import boto3
 from flask import Flask, redirect
 from flask_sqlalchemy import SQLAlchemy
 from json import load
@@ -28,6 +29,8 @@ domain = app.config.get("SERVER_NAME")
 port = environ.get("PORT", config["default_port"])
 redirect_uri = environ.get("REDIRECT_URI", config["redirect_uri"])
 client_uri = environ.get("CLIENT_URI", config["client_uri"])
+
+client_s3 = boto3.resource("s3")
 
 
 @app.route("/")
