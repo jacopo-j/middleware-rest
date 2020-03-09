@@ -44,3 +44,4 @@ Werkzeug==0.16.1
 wrapt==1.11.2
 zipp==3.0.0
 pytest
+moto

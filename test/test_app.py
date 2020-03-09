@@ -1,7 +1,16 @@
+import io
+
+import boto3
 import pytest
 import uuid
 import base64
+
+from botocore.stub import Stubber
+from moto import mock_s3
 from webapp import create_app
+from webapp.modules import client_s3
+
+BUCKET = "middleware-rest-2020"
 
 TEST_USER_CREDENTIALS = {
     "username": uuid.uuid4().hex,  # Prevent conflicts with existing users
@@ -26,9 +35,20 @@ TEST_TOKEN_DATA = {
 oauth_client = None
 oauth_token = ""
 
+@pytest.fixture(scope="module", autouse=True)
+def moto_boto():
+    # setup: start moto server and create the bucket
+    mocks3 = mock_s3()
+    mocks3.start()
+    res = boto3.resource('s3')
+    res.create_bucket(Bucket=BUCKET)
+    yield
+    # teardown: stop moto server
+    mocks3.stop()
+
 
 @pytest.fixture(scope="module")
-def client():
+def client(moto_boto):
     app = create_app()
     app.config["TESTING"] = True
     testing_client = app.test_client()
@@ -147,3 +167,22 @@ def test_list_users_success(client):
         follow_redirects=True
     )
     assert response.status_code == 200
+
+
+def test_upload_image(client):
+    # Upload image
+    client.post(
+        "api/upload",
+        data={"title": "test", "image": (io.BytesIO(b"abcdef"), "file.jpg")},
+        headers={"Authorization": "Bearer " + oauth_token},
+        follow_redirects=True
+    )
+    # Check the image exists
+    response = client.get(
+        "api/user/3/image/1",
+        headers={"Authorization": "Bearer " + oauth_token},
+        follow_redirects=True
+    )
+    assert response.status_code == 200
+    assert response.json["title"] == "test"
+

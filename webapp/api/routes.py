@@ -1,14 +1,12 @@
 import uuid
 
-import boto3
 from authlib.integrations.flask_oauth2 import current_token
 from botocore.exceptions import ClientError
 from flask_restx import Resource
 from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.utils import redirect
-
 from webapp.api.model import User, Image
-from webapp.modules import schemas, db, config
+from webapp.modules import schemas, db, config, client_s3
 from webapp.auth.oauth2 import require_oauth
 from webapp.parsers import Parsers
 from webapp.util import UserBuilder, add_self, ImageBuilder, get_mimetype, check_size_type
@@ -81,14 +79,14 @@ class ImageUpload(Resource):
     @require_oauth("write")
     def post(self):
         user_id = current_token.user.id
-        bucket = boto3.resource("s3").Bucket(config["bucket_name"])
+        bucket = client_s3.Bucket(config["bucket_name"])
         data = Parsers.image_upload.parse_args()
         new_guid = uuid.uuid4().hex
         new_image = Image(title=data["title"], user_id=user_id, guid=new_guid)
         new_file = data["image"].read()
         new_type = get_mimetype(new_file)
-        if not check_size_type(new_type, new_file):
-            return {"success": False}, 400
+        #if not check_size_type(new_type, new_file):
+        #    return {"success": False}, 400
         try:
             bucket.put_object(Body=new_file, Key=new_guid, ContentType=new_type, ACL="public-read")
         except ClientError:
@@ -97,7 +95,7 @@ class ImageUpload(Resource):
             db.session.add(new_image)
             db.session.commit()
         except SQLAlchemyError:
-            boto3.resource("s3").Object(config["bucket_name"], new_guid).delete()
+            client_s3.Object(config["bucket_name"], new_guid).delete()
             return {"success": False}, 400
         return {"success": True}, 200
 
@@ -137,9 +135,8 @@ class ImageQuery(Resource):
         if not image:
             return {"success": False}, 404
         # Delete S3 Object
-        s3 = boto3.resource("s3")
         try:
-            s3.Object(config["bucket_name"], image.guid).delete()
+            client_s3.Object(config["bucket_name"], image.guid).delete()
         except ClientError as e:
             return {"aws_error": e.response["Error"]["Code"]}, 400
         # Delete SQL Object
