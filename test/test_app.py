@@ -8,9 +8,9 @@ import base64
 from botocore.stub import Stubber
 from moto import mock_s3
 from webapp import create_app
-from webapp.modules import client_s3
+from webapp.modules import client_s3, config
 
-BUCKET = "middleware-rest-2020"
+BUCKET = config["bucket_name"]
 
 TEST_USER_CREDENTIALS = {
     "username": uuid.uuid4().hex,  # Prevent conflicts with existing users
