@@ -13,14 +13,14 @@ TEST_CLIENT_DATA = {
     "client_uri": "http://0.0.0.0",
     "redirect_uri": "http://0.0.0.0",
     "response_type": "code",
-    "scope": "profile",
+    "scope": "read write",
     "token_endpoint_auth_method": "client_secret_basic",
     "grant_type": "password\ncode\nimplicit"
 }
 
 TEST_TOKEN_DATA = {
     **TEST_USER_CREDENTIALS,
-    "scope": "profile"
+    "scope": "read write"
 }
 
 oauth_client = None

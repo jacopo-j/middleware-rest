@@ -12,7 +12,8 @@ authorizations = {
         "tokenUrl": "/auth" + schemas["issue_token"],
         "authorizationUrl": "/auth" + schemas["authorize"],
         "scopes": {
-            "profile": "auth",
+            "read": "auth",
+            "write": "auth"
         }
     },
     "oauth2_password": {
@@ -21,7 +22,8 @@ authorizations = {
         "tokenUrl": "/auth" + schemas["issue_token"],
         "authorizationUrl": "/auth" + schemas["authorize"],
         "scopes": {
-            "profile": "auth",
+            "read": "auth",
+            "write": "auth",
         }
     },
     "oauth2_implicit": {
@@ -30,7 +32,7 @@ authorizations = {
         "tokenUrl": "/auth" + schemas["issue_token"],
         "authorizationUrl": "/auth" + schemas["authorize"],
         "scopes": {
-            "profile": "auth",
+            "read": "auth"
         }
     }
 }
