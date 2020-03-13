@@ -13,6 +13,8 @@ from webapp.modules import client_s3, config
 
 BUCKET = config["bucket_name"]
 
+IMAGE_FILE = b'GIF89a\x01\x00\x01\x00\x00\xff\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x00;'
+
 TEST_USER_CREDENTIALS = {
     "username": uuid.uuid4().hex,  # Prevent conflicts with existing users
     "password": "testpw"
@@ -34,7 +36,8 @@ TEST_TOKEN_DATA = {
 }
 
 oauth_client = None
-oauth_token = ""
+oauth_token_password = ""
+max_id = 2
 
 
 @pytest.fixture(scope='module')
@@ -148,7 +151,8 @@ def test_request_token_password_wrong_client(client):
 
 
 def test_request_token_password_success(client):
-    global oauth_token
+    global max_id
+    global oauth_token_password
     response = client.post(
         "auth/token",
         data={**TEST_TOKEN_DATA, "grant_type": "password"},
@@ -159,7 +163,8 @@ def test_request_token_password_success(client):
         follow_redirects=True
     )
     assert response.status_code == 200
-    oauth_token = response.get_json()["access_token"]
+    oauth_token_password = response.get_json()["access_token"]
+    max_id += 1
 
 
 def test_list_users_wrong_token(client):
@@ -174,26 +179,146 @@ def test_list_users_wrong_token(client):
 def test_list_users_success(client):
     response = client.get(
         "api/users",
-        headers={"Authorization": "Bearer " + oauth_token},
+        headers={"Authorization": "Bearer " + oauth_token_password},
         follow_redirects=True
     )
     assert response.status_code == 200
 
 
-def test_upload_image(client):
+def test_upload_image_success(client):
     # Upload image
     client.post(
         "api/upload",
-        data={"title": "test", "image": (io.BytesIO(b"abcdef"), "file.jpg")},
-        headers={"Authorization": "Bearer " + oauth_token},
+        data={"title": "test", "image": (io.BytesIO(IMAGE_FILE), "file.jpg")},
+        headers={"Authorization": "Bearer " + oauth_token_password},
         follow_redirects=True
     )
     # Check the image exists
     response = client.get(
         "api/user/3/image/1",
-        headers={"Authorization": "Bearer " + oauth_token},
+        headers={"Authorization": "Bearer " + oauth_token_password},
         follow_redirects=True
     )
     assert response.status_code == 200
     assert response.json["title"] == "test"
 
+
+def test_upload_image_wrong_token(client):
+    response = client.post(
+        "api/upload",
+        data={"title": "test", "image": (io.BytesIO(b"abcdef"), "file.jpg")},
+        headers={"Authorization": "Bearer wrongtoken123"},
+        follow_redirects=True
+    )
+    assert response.status_code == 401
+
+
+def test_upload_delete_image_success(client):
+    # Check the image exists
+    response = client.get(
+        "api/user/3/image/1",
+        headers={"Authorization": "Bearer " + oauth_token_password},
+        follow_redirects=True
+    )
+    assert response.status_code == 200
+    assert response.json["title"] == "test"
+
+    # Delete image
+    client.delete(
+        "api/user/3/image/1",
+        headers={"Authorization": "Bearer " + oauth_token_password},
+        follow_redirects=True
+    )
+
+    # Check no image is present
+    response = client.get(
+        "api/user/3/image/1",
+        headers={"Authorization": "Bearer " + oauth_token_password},
+        follow_redirects=True
+    )
+    assert response.status_code == 404
+
+
+def test_upload_delete_image_wrong_token(client):
+    # Upload image
+    response = client.post(
+        "api/upload",
+        data={"title": "to_delete", "image": (io.BytesIO(b"abcdef"), "file.jpg")},
+        headers={"Authorization": "Bearer wrongtoken123"},
+        follow_redirects=True
+    )
+
+    assert response.status_code == 401
+
+    # Delete image
+    response = client.delete(
+        "api/user/3/image/1",
+        data={"title": "to_delete", "image": (io.BytesIO(b"abcdef"), "file.jpg")},
+        headers={"Authorization": "Bearer wrongtoken123"},
+        follow_redirects=True
+    )
+
+    assert response.status_code == 401
+
+
+def test_get_delete_image_not_present(client):
+    # Get image not present
+    response = client.get(
+        "api/user/3/image/1",
+        data={"title": "to_delete", "image": (io.BytesIO(b"abcdef"), "file.jpg")},
+        headers={"Authorization": "Bearer " + oauth_token_password},
+        follow_redirects=True
+    )
+
+    assert response.status_code == 404
+
+    # Delete image not present
+    response = client.delete(
+        "api/user/3/image/1",
+        data={"title": "to_delete", "image": (io.BytesIO(b"abcdef"), "file.jpg")},
+        headers={"Authorization": "Bearer " + oauth_token_password},
+        follow_redirects=True
+    )
+
+    assert response.status_code == 404
+
+    # Get image no user
+    response = client.get(
+        "api/user/100/image/1",
+        data={"title": "to_delete", "image": (io.BytesIO(b"abcdef"), "file.jpg")},
+        headers={"Authorization": "Bearer " + oauth_token_password},
+        follow_redirects=True
+    )
+
+    assert response.status_code == 404
+
+
+def test_get_images(client):
+    response = client.get(
+        "api/user/3",
+        headers={"Authorization": "Bearer " + oauth_token_password},
+        follow_redirects=True
+    )
+
+    assert response.status_code == 200
+    assert response.json["id"] == '3'
+
+
+def test_get_images_wrong_token(client):
+    response = client.get(
+        "api/user/3",
+        headers={"Authorization": "Bearer wrongtoken123"},
+        follow_redirects=True
+    )
+
+    assert response.status_code == 401
+
+
+def test_get_images_user_not_present(client):
+    response = client.get(
+        "api/user/{}".format(max_id+1),
+        headers={"Authorization": "Bearer " + oauth_token_password},
+        follow_redirects=True
+    )
+
+    assert response.status_code == 404
