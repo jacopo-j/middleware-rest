@@ -59,7 +59,7 @@ class ImagesQuery(Resource):
     @require_oauth("read")
     def get(self, user_id):
         if not User.exists_by_id(user_id):
-            return {"message": "User with given name doesn't exist"}, 400
+            return {"message": "User with given name doesn't exist"}, 404
         selected_user = User.query.filter_by(id=user_id).first()
         selected_images = Image.query.filter_by(user_id=user_id).all()
         images = [ImageBuilder(user_id, image.id, image.guid, image.title) for image in selected_images]
@@ -85,8 +85,8 @@ class ImageUpload(Resource):
         new_image = Image(title=data["title"], user_id=user_id, guid=new_guid)
         new_file = data["image"].read()
         new_type = get_mimetype(new_file)
-        #if not check_size_type(new_type, new_file):
-        #    return {"success": False}, 400
+        if not check_size_type(new_type, new_file):
+            return {"success": False}, 400
         try:
             bucket.put_object(Body=new_file, Key=new_guid, ContentType=new_type, ACL="public-read")
         except ClientError:
