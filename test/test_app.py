@@ -37,6 +37,7 @@ TEST_TOKEN_DATA = {
 
 oauth_client = None
 oauth_token_password = ""
+oauth_token_code = ""
 max_id = 2
 
 
@@ -185,6 +186,7 @@ def test_list_users_success(client):
     assert response.status_code == 200
 
 
+@pytest.mark.actions
 def test_upload_image_success(client):
     # Upload image
     client.post(
@@ -213,6 +215,7 @@ def test_upload_image_wrong_token(client):
     assert response.status_code == 401
 
 
+@pytest.mark.actions
 def test_upload_delete_image_success(client):
     # Check the image exists
     response = client.get(
@@ -261,6 +264,7 @@ def test_upload_delete_image_wrong_token(client):
     assert response.status_code == 401
 
 
+@pytest.mark.actions
 def test_get_delete_image_not_present(client):
     # Get image not present
     response = client.get(
@@ -284,7 +288,7 @@ def test_get_delete_image_not_present(client):
 
     # Get image no user
     response = client.get(
-        "api/user/100/image/1",
+        "api/user/{}/image/1".format(max_id + 1),
         data={"title": "to_delete", "image": (io.BytesIO(b"abcdef"), "file.jpg")},
         headers={"Authorization": "Bearer " + oauth_token_password},
         follow_redirects=True
@@ -322,3 +326,4 @@ def test_get_images_user_not_present(client):
     )
 
     assert response.status_code == 404
+
