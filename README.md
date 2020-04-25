@@ -1,4 +1,5 @@
 # Image Server Demo
+![Python application](https://github.com/jacopo-j/middleware-rest/workflows/Python%20application/badge.svg)
 Real life example of a scalable image server with OAuth authentication.
 ## Features
 - Self-documented *RESTful* API to manage users and their images
