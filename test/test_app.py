@@ -75,7 +75,7 @@ def client(moto_boto):
 
 def test_user_login_not_registered(client):
     response = client.post(
-        "auth/login",
+        "api/login",
         data=TEST_USER_CREDENTIALS,
         follow_redirects=True
     )
@@ -102,7 +102,7 @@ def test_user_double_registration(client):
 
 def test_user_login_wrong_password(client):
     response = client.post(
-        "auth/login",
+        "api/login",
         data={**TEST_USER_CREDENTIALS, "password": "testwrongpw"},
         follow_redirects=True
     )
@@ -120,7 +120,7 @@ def test_client_creation_not_loggedin(client):
 
 def test_user_login_success(client):
     response = client.post(
-        "auth/login",
+        "api/login",
         data=TEST_USER_CREDENTIALS,
         follow_redirects=True
     )
