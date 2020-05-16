@@ -11,6 +11,7 @@ from webapp.auth.oauth2 import require_oauth
 from webapp.parsers import Parsers
 from webapp.util import UserBuilder, add_self, ImageBuilder, get_mimetype, check_size_type
 from .marshaller import api, Marshaller
+from flask import session
 
 # Define grants that allows to access the different resources
 security_grants = [{"oauth2_implicit": ["read"]}, {"oauth2_password": ["read write"]}, {"oauth2_code": ["read write"]}]
@@ -36,6 +37,20 @@ class Register(Resource):
             return {"success": False}, 500
 
 
+@api.route(schemas["login"])
+@api.response(200, description="Login was successful")
+@api.response(401, description="Login was unsuccessful")
+class Login(Resource):
+    @api.expect(Parsers.login, validate=True)
+    def post(self):
+        data = Parsers.login.parse_args()
+        user = User.query.filter_by(username=data["username"]).first()
+        if not user or not user.check_password(data["password"]):
+            return {"message": "Login failed"}, 401
+        session["id"] = user.id
+        return {"message": "Login succeeded"}
+
+
 @api.route(schemas["users"])
 class UsersQuery(Resource):
     @api.doc(security=security_grants)
@@ -54,6 +69,7 @@ class UsersQuery(Resource):
 class ImagesQuery(Resource):
     @api.response(200, description="List of images of the selected user", model=Marshaller.user_images)
     @api.response(401, description="Unauthorized")
+    @api.response(403, description="Unauthorized")
     @api.response(404, description="Selected user doesn't exist")
     @api.doc(security=security_grants)
     @require_oauth("read")
@@ -72,6 +88,7 @@ class ImagesQuery(Resource):
 @api.route(schemas["upload"])
 class ImageUpload(Resource):
     @api.response(401, description="Unauthorized")
+    @api.response(403, description="Unauthorized")
     @api.response(400, description="Upload wasn't successful")
     @api.response(200, description="Upload was successful")
     @api.doc(security=security_grants)
@@ -105,6 +122,7 @@ class ImageQuery(Resource):
     @api.response(200, description="Information about the selected image", model=Marshaller.single_image)
     @api.response(404, description="Selected image doesn't exist")
     @api.response(401, description="Unauthorized")
+    @api.response(403, description="Unauthorized")
     @api.doc(security=security_grants)
     @require_oauth("read")
     def get(self, user_id, image_id):
@@ -126,6 +144,7 @@ class ImageQuery(Resource):
     @api.response(404, description="Selected image doesn't exist")
     @api.response(400, description="An error occurred during the delete")
     @api.response(401, description="Unauthorized")
+    @api.response(403, description="Unauthorized")
     @api.doc(security=security_grants)
     @require_oauth("write")
     def delete(self, user_id, image_id):
@@ -143,16 +162,3 @@ class ImageQuery(Resource):
         Image.query.filter_by(id=image_id).delete()
         db.session.commit()
         return {"success": True}
-
-
-@api.route(schemas["image"].format(user_id="<user_id>", image_id="<image_id>")+"/get")
-class ImageStorage(Resource):
-    @api.response(200, description="Redirect to the image file")
-    @api.response(404, description="Selected image doesn't exist")
-    @api.doc(security=security_grants)
-    @require_oauth("read")
-    def get(self, user_id, image_id):
-        image = Image.query.filter_by(id=image_id, user_id=user_id).first()
-        if not image:
-            return {"message": "Selected image doesn't exist"}, 400
-        redirect(config["storage"].format(bucket_name=config["bucket_name"], guid=image.guid))

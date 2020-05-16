@@ -15,23 +15,6 @@ from webapp.util import current_user, split_by_crlf
 api = Namespace("auth", description="OAuth related operations")
 
 
-@api.route(schemas["login"])
-@api.doc(params={"username": "Username", "password": "Password"})
-@api.response(200, description="Login was successful")
-@api.response(401, description="Login was unsuccessful")
-class Login(Resource):
-    @api.expect(Parsers.login, validate=True)
-    def post(self):
-        data = Parsers.login.parse_args()
-        user = User.query.filter_by(username=data["username"]).first()
-        if not user or not user.check_password(data["password"]):
-            # TODO login failed
-            return {"message": "Login failed"}, 401
-        session["id"] = user.id
-        # TODO login succeeded
-        return {"message": "Login succeeded"}
-
-
 @api.route(schemas["create_client"])
 @api.response(200, description="Client creation successful")
 @api.response(401, description="Unauthorized")
