@@ -69,7 +69,7 @@ class UsersQuery(Resource):
 class ImagesQuery(Resource):
     @api.response(200, description="List of images of the selected user", model=Marshaller.user_images)
     @api.response(401, description="Unauthorized")
-    @api.response(403, description="Unauthorized")
+    @api.response(403, description="Forbidden")
     @api.response(404, description="Selected user doesn't exist")
     @api.doc(security=security_grants)
     @require_oauth("read")
@@ -88,7 +88,7 @@ class ImagesQuery(Resource):
 @api.route(schemas["upload"])
 class ImageUpload(Resource):
     @api.response(401, description="Unauthorized")
-    @api.response(403, description="Unauthorized")
+    @api.response(403, description="Forbidden")
     @api.response(400, description="Upload wasn't successful")
     @api.response(200, description="Upload was successful")
     @api.doc(security=security_grants)
@@ -122,7 +122,7 @@ class ImageQuery(Resource):
     @api.response(200, description="Information about the selected image", model=Marshaller.single_image)
     @api.response(404, description="Selected image doesn't exist")
     @api.response(401, description="Unauthorized")
-    @api.response(403, description="Unauthorized")
+    @api.response(403, description="Forbidden")
     @api.doc(security=security_grants)
     @require_oauth("read")
     def get(self, user_id, image_id):
@@ -144,7 +144,7 @@ class ImageQuery(Resource):
     @api.response(404, description="Selected image doesn't exist")
     @api.response(400, description="An error occurred during the delete")
     @api.response(401, description="Unauthorized")
-    @api.response(403, description="Unauthorized")
+    @api.response(403, description="Forbidden")
     @api.doc(security=security_grants)
     @require_oauth("write")
     def delete(self, user_id, image_id):
