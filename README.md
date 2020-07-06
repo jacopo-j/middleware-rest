@@ -3,7 +3,7 @@
 
 Real life example of a scalable image server with OAuth authentication and AWS S3 storage.
 ## Features
-- Self-documented *RESTful* API to manage users and their images
+- Self-documented *RESTful* API to manage users and their images ([link to Swagger interface](https://aqueous-castle-79099.herokuapp.com/swagger))
 - Fully functional *OAuth2* Server
 - Two ready-to-use OAuth2 *Clients*
 - *Implicit*, *Password* and *AuthenticationCode* flows embedded into swagger
